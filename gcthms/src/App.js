@@ -1,11 +1,11 @@
 import './App.css';
-import InputAreas from './components/inputArea.jsx';
+import FileUploader from './components/FileUploader.tsx';
 
 function App() {
   return (
     <div className="App">
       <main>
-        <InputAreas />
+        <FileUploader />
       </main>
     </div>
   );
