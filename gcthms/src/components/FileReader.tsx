@@ -20,98 +20,91 @@ interface Summary {
   }[];
 }
 
-
 const FileReader = ({ file }: { file: File | null }) => {
   const [summary, setSummary] = useState<Summary | null>(null);
   const [error, setError] = useState<string>("");
 
   useEffect(() => {
-   function tallyTransactions(text: string): Summary {
-  const lines = text.split("\n");
-  let totalCredit = 0;
-  let totalDebit = 0;
-  const transactions: { description: string; debit: number; credit: number }[] = [];
-  const pairMap = new Map<string, { count: number; totalDebit: number; totalCredit: number }>();
-  const contactTotals = new Map<string, { count: number; totalDebit: number; totalCredit: number }>();
+    function tallyTransactions(text: string): Summary {
+      const lines = text.split("\n");
+      let totalCredit = 0;
+      let totalDebit = 0;
+      const transactions: { description: string; debit: number; credit: number }[] = [];
+      const pairMap = new Map<string, { count: number; totalDebit: number; totalCredit: number }>();
+      const contactTotals = new Map<string, { count: number; totalDebit: number; totalCredit: number }>();
 
+      for (const line of lines) {
+        const transferMatch = line.match(/Transfer\s+from\s+(\d+)\s+to\s+(\d+)\s+\d+\s+([\d,.]+)/i);
+        if (transferMatch) {
+          const [, sender, receiver, amountRaw] = transferMatch;
+          const amount = parseFloat(amountRaw.replace(/,/g, ""));
 
-  const myAccount = "09065999634";
+          // Only record debit for sender in transactions
+          const myAccount = "09065999634";
+          if(sender === myAccount) {
+            transactions.push({
+            description: `Transfer from ${sender} to ${receiver}`,
+            debit: amount,
+            credit: 0,
+            
+          });
+          }
+          if(receiver === myAccount) {
+            transactions.push({
+            description: `Transfer to ${receiver} from ${sender}`,
+            debit: 0,
+            credit: amount,
+          });
+          }
+          totalDebit += amount;
+          totalCredit += amount;
 
-for (const line of lines) {
-  const match = line.match(/(sent|received|Transfer|Payment)\s+(?:to|from)?\s*([a-zA-Z0-9\s]+)\s+([\d,.]+)/i);
-  if (match) {
-    const [, type, nameRaw, amountRaw] = match;
-    const name = nameRaw.trim();
-    const amount = parseFloat(amountRaw.replace(/,/g, ""));
-    
-    const lowerLine = line.toLowerCase();
-    let isDebit = false;
-    let isCredit = false;
+          const key = `${sender} → ${receiver}`;
+          if (!pairMap.has(key)) {
+            pairMap.set(key, { count: 0, totalDebit: 0, totalCredit: 0 });
+          }
+          const group = pairMap.get(key)!;
+          group.count += 1;
+          group.totalDebit += amount;
+          group.totalCredit += amount;
 
-    if (type.includes("/sent\s+to|transfer\s+to|payment\s+to/.test(lowerLine)")) {
-      isDebit = true;
-    } else if (/received\s+from/.test(lowerLine)) {
-      isCredit = true;
-    }
+          
 
-    if (!isDebit && !isCredit) {
-      isDebit = true; // fallback
-    }
+          // Sender gets debit, receiver gets credit in summary
+          if (!contactTotals.has(sender)) {
+            contactTotals.set(sender, { count: 0, totalDebit: 0, totalCredit: 0 });
+          }
+          const senderData = contactTotals.get(sender)!;
+          senderData.count += 1;
+          senderData.totalDebit += amount;
 
-    const sender = isDebit ? myAccount : name;
-    const receiver = isDebit ? name : myAccount;
-
-    const debit = isDebit ? amount : 0;
-    const credit = isCredit ? amount : 0;
-
-    const description = line.trim();
-    transactions.push({ description, debit, credit });
-    totalCredit += credit;
-    totalDebit += debit;
-
-    const key = `${sender} → ${receiver}`;
-    if (!pairMap.has(key)) {
-      pairMap.set(key, { count: 0, totalDebit: 0, totalCredit: 0 });
-    }
-    const group = pairMap.get(key)!;
-    group.count += 1;
-    group.totalDebit += debit;
-    group.totalCredit += credit;
-
-    const contact = isDebit ? receiver : sender;
-
-    if (!contactTotals.has(contact)) {
-      contactTotals.set(contact, { count: 0, totalDebit: 0, totalCredit: 0 });
-    }
-    const contactData = contactTotals.get(contact)!;
-    contactData.count += 1;
-    contactData.totalDebit += debit;
-    contactData.totalCredit += credit;
-  }
-}
-
-
+          if (!contactTotals.has(receiver)) {
+            contactTotals.set(receiver, { count: 0, totalDebit: 0, totalCredit: 0 });
+          }
+          const receiverData = contactTotals.get(receiver)!;
+          receiverData.count += 1;
+          receiverData.totalCredit += amount;
+        }
+      }
 
       return {
-      transactions,
-      totalCredit,
-      totalDebit,
-      pairSummaries: Array.from(pairMap.entries()).map(([pair, data]) => ({
-        pair,
-        count: data.count,
-        totalDebit: data.totalDebit,
-        totalCredit: data.totalCredit,
-      })),
-      contactSummaries: Array.from(contactTotals.entries()).map(([contact, data]) => ({
-        contact,
-        count: data.count,
-        totalDebit: data.totalDebit,
-        totalCredit: data.totalCredit,
-      })),
-    };
-
-}
-
+        transactions,
+        totalCredit,
+        totalDebit,
+        pairSummaries: Array.from(pairMap.entries()).map(([pair, data]) => ({
+          pair,
+          count: data.count,
+          totalDebit: data.totalDebit,
+          totalCredit: data.totalCredit,
+        })),
+        contactSummaries: Array.from(contactTotals.entries()).map(([contact, data]) => ({
+          contact,
+          count: data.count,
+          totalDebit: data.totalDebit,
+          totalCredit: data.totalCredit,
+        })),
+      };
+    }
 
     const readPdfText = async () => {
       if (!file) return;
@@ -121,37 +114,45 @@ for (const line of lines) {
         reader.readAsArrayBuffer(file);
 
         reader.onload = async () => {
-          const typedArray = new Uint8Array(reader.result as ArrayBuffer);
-          const loadingTask = pdfjsLib.getDocument({
-            data: typedArray,
-            password: "",
-          });
+          try {
+            const typedArray = new Uint8Array(reader.result as ArrayBuffer);
+            const loadingTask = pdfjsLib.getDocument({
+              data: typedArray,
+              password: "",
+            });
 
-          loadingTask.onPassword = (callback: (password: string) => void) => {
-            const userPassword = prompt("Enter PDF password:") || "";
-            callback(userPassword);
-          };
+            loadingTask.onPassword = (callback: (password: string) => void) => {
+              const userPassword = prompt("Enter PDF password:") || "";
+              callback(userPassword);
+            };
 
-          const pdf = await loadingTask.promise;
-          let fullText = "";
+            const pdf = await loadingTask.promise;
+            let fullText = "";
 
-          for (let pageNum = 1; pageNum <= pdf.numPages; pageNum++) {
-            const page = await pdf.getPage(pageNum);
-            const content = await page.getTextContent();
-            const pageText = content.items.map((item: any) => item.str).join(" ");
-            const cleanedText = pageText.replace(/(sent|received|Transfer|Payment)/gi, "\n$1");
-            fullText += cleanedText + "\n";
+            for (let pageNum = 1; pageNum <= pdf.numPages; pageNum++) {
+              const page = await pdf.getPage(pageNum);
+              const content = await page.getTextContent();
+              const pageText = content.items.map((item: any) => item.str).join(" ");
+              const cleanedText = pageText.replace(/(sent|received|Transfer|Payment)/gi, "\n$1");
+              fullText += cleanedText + "\n";
+            }
+
+            const tally = tallyTransactions(fullText);
+            setSummary(tally);
+          } catch (err: any) {
+            if (err?.name === "PasswordException") {
+              setError("Incorrect password or password required.");
+            } else {
+              setError("Failed to process PDF.");
+            }
           }
+        };
 
-          const tally = tallyTransactions(fullText);
-          setSummary(tally);
+        reader.onerror = () => {
+          setError("Failed to read file.");
         };
       } catch (err: any) {
-        if (err?.name === "PasswordException") {
-          setError("Incorrect password or password required.");
-        } else {
-          setError("Failed to process PDF.");
-        }
+        setError("Failed to process PDF.");
       }
     };
 
@@ -161,51 +162,45 @@ for (const line of lines) {
   return (
     <div>
       <h2>Transaction Summary</h2>
-      {error && <p>{error}</p>} 
+      {error && <p>{error}</p>}
+
       {summary ? (
         <>
-          <table border={1} cellPadding={6} style={{ borderCollapse: "collapse", width: "100%" }}>
 
-            <tbody>
-              {summary.contactSummaries && (
-  <>
-    <table border={1} cellPadding={6} style={{ borderCollapse: "collapse", width: "100%" }}>
-      <thead>
-        <tr>
-          <th>Description</th>
-          <th>Number of Transactions</th>
-          <th>Total Debit</th>
-          <th>Total Credit</th>
-        </tr>
-      </thead>
-      <tbody>
-        {summary.contactSummaries.map((item, index) => (
-          <tr key={index}>
-            <td>{item.contact}</td>
-            <td>{item.count}</td>
-            <td>{item.totalDebit.toLocaleString()}</td>
-            <td>{item.totalCredit.toLocaleString()}</td>
-          </tr>
-        ))}
-      </tbody>
-    </table>
-  </>
-)}
 
-              <tr style={{ fontWeight: "bold" }}>
-                <td>Total</td>
-                <td>{summary.totalDebit.toLocaleString()}</td>
-                <td>{summary.totalCredit.toLocaleString()}</td>
-              </tr>
-            </tbody>
-          </table>
+          {/* Sender → Receiver Pair Summary */}
+          {summary.pairSummaries && summary.pairSummaries.length > 0 && (
+            <>
+              <h3 style={{ marginTop: "2rem" }}>By Sender → Receiver</h3>
+              <table border={1} cellPadding={6} style={{ borderCollapse: "collapse", width: "100%" }}>
+                <thead>
+                  <tr>
+                    <th>Sender → Receiver</th>
+                    <th>Number of Transactions</th>
+                    <th>Total Debit</th>
+                    <th>Total Credit</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {summary.pairSummaries.map((item, index) => (
+                    <tr key={index}>
+                      <td>{item.pair}</td>
+                      <td>{item.count}</td>
+                      <td>{item.totalDebit.toLocaleString()}</td>
+                      <td>{item.totalCredit.toLocaleString()}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </>
+          )}
 
-          
-
-          <p>Total Transactions: {summary.transactions.length}</p>
+          <p style={{ marginTop: "1.5rem" }}>
+            Total Transactions: {summary.transactions.length}
+          </p>
         </>
       ) : (
-        !error && "Processing PDF..."
+        !error && <p>Processing PDF...</p>
       )}
     </div>
   );
