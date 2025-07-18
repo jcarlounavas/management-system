@@ -46,8 +46,8 @@ const FileReader = ({ file }: { file: File | null }) => {
             description: `Transfer from ${sender} to ${receiver}`,
             debit: amount,
             credit: 0,
-            
           });
+          totalDebit += amount;
           }
           if(receiver === myAccount) {
             transactions.push({
@@ -55,55 +55,52 @@ const FileReader = ({ file }: { file: File | null }) => {
             debit: 0,
             credit: amount,
           });
-          }
-          totalDebit += amount;
           totalCredit += amount;
+          }
 
           const key = `${sender} → ${receiver}`;
-          if (!pairMap.has(key)) {
-            pairMap.set(key, { count: 0, totalDebit: 0, totalCredit: 0 });
-          }
-          const group = pairMap.get(key)!;
-          group.count += 1;
-          group.totalDebit += amount;
-          group.totalCredit += amount;
-
-          
-
-          // Sender gets debit, receiver gets credit in summary
-          if (!contactTotals.has(sender)) {
-            contactTotals.set(sender, { count: 0, totalDebit: 0, totalCredit: 0 });
-          }
-          const senderData = contactTotals.get(sender)!;
-          senderData.count += 1;
-          senderData.totalDebit += amount;
-
-          if (!contactTotals.has(receiver)) {
-            contactTotals.set(receiver, { count: 0, totalDebit: 0, totalCredit: 0 });
-          }
-          const receiverData = contactTotals.get(receiver)!;
-          receiverData.count += 1;
-          receiverData.totalCredit += amount;
-        }
+      if (!pairMap.has(key)) {
+        pairMap.set(key, { count: 0, totalDebit: 0, totalCredit: 0 });
       }
+      const group = pairMap.get(key)!;
+      group.count += 1;
+      if (sender === myAccount) group.totalDebit += amount;
+      if (receiver === myAccount) group.totalCredit += amount;
 
-      return {
-        transactions,
-        totalCredit,
-        totalDebit,
-        pairSummaries: Array.from(pairMap.entries()).map(([pair, data]) => ({
-          pair,
-          count: data.count,
-          totalDebit: data.totalDebit,
-          totalCredit: data.totalCredit,
-        })),
-        contactSummaries: Array.from(contactTotals.entries()).map(([contact, data]) => ({
-          contact,
-          count: data.count,
-          totalDebit: data.totalDebit,
-          totalCredit: data.totalCredit,
-        })),
-      };
+      // Contact grouping
+      if (!contactTotals.has(sender)) {
+        contactTotals.set(sender, { count: 0, totalDebit: 0, totalCredit: 0 });
+      }
+      const senderData = contactTotals.get(sender)!;
+      senderData.count += 1;
+      if (sender === myAccount) senderData.totalDebit += amount;
+
+      if (!contactTotals.has(receiver)) {
+        contactTotals.set(receiver, { count: 0, totalDebit: 0, totalCredit: 0 });
+      }
+      const receiverData = contactTotals.get(receiver)!;
+      receiverData.count += 1;
+      if (receiver === myAccount) receiverData.totalCredit += amount;
+    }
+  }
+
+  return {
+    transactions,
+    totalCredit,
+    totalDebit,
+    pairSummaries: Array.from(pairMap.entries()).map(([pair, data]) => ({
+      pair,
+      count: data.count,
+      totalDebit: data.totalDebit,
+      totalCredit: data.totalCredit,
+    })),
+    contactSummaries: Array.from(contactTotals.entries()).map(([contact, data]) => ({
+      contact,
+      count: data.count,
+      totalDebit: data.totalDebit,
+      totalCredit: data.totalCredit,
+    })),
+  };
     }
 
     const readPdfText = async () => {
