@@ -34,13 +34,20 @@ const FileReader = ({ file }: { file: File | null }) => {
       const contactTotals = new Map<string, { count: number; totalDebit: number; totalCredit: number }>();
 
       for (const line of lines) {
-        const transferMatch = line.match(/Transfer\s+from\s+(\d+)\s+to\s+(\d+)\s+\d+\s+([\d,.]+)/i);
+      const transferMatch = line.match(/(?:Transfer|Refund|Payment|GCredit)\s+from\s+(\d+)\s+to\s+(\d+)\s+\d+\s+([\d,.]+)/i);
         if (transferMatch) {
-          const [, sender, receiver, amountRaw] = transferMatch;
+          const [type, sender, receiver, amountRaw] = transferMatch;
           const amount = parseFloat(amountRaw.replace(/,/g, ""));
+          const looseRefundMatch = line.match(/Refund\s+from\s+(.+?)(?:\s+\d{4,})?\s+([\d,]+\.\d{2})/i);
+          const otherTransaction = line.match(/Payment\s+to\s+(.+?)\s+\d+\s+([\d,.]+)/i);
+          const otherTransacB = line.match(/GCredit\s+(.+?)\s+\d+\s+([\d,.]+)/i);
+          const otherTransacC = line.match(/GGives\s+(.+?)\s+\d+\s+([\d,.]+)/i);
+          const otherTransacD = line.match(/Cash-out\s+(.+?)\s+\d+\s+([\d,.]+)/i);
+
 
           // Only record debit for sender in transactions
           const myAccount = "09065999634";
+
           if(sender === myAccount) {
             transactions.push({
             description: `Transfer from ${sender} to ${receiver}`,
@@ -51,14 +58,62 @@ const FileReader = ({ file }: { file: File | null }) => {
           }
           if(receiver === myAccount) {
             transactions.push({
-            description: `Transfer to ${receiver} from ${sender}`,
+            description: `Transfer to ${receiver} to ${sender}`,
             debit: 0,
             credit: amount,
           });
           totalCredit += amount;
           }
-
-          const key = `${sender} → ${receiver}`;
+      if (looseRefundMatch) {
+          const [_, sender, amountRaw] = looseRefundMatch;
+          const amount = parseFloat(amountRaw.replace(/,/g, ""));
+          transactions.push({
+            description: `Refund from ${sender}`,
+            debit: 0,
+            credit: amount,
+          });
+          totalCredit += amount;
+      } else if (otherTransaction) {
+          const [_, receiver, amountRaw] = otherTransaction;
+          const amount = parseFloat(amountRaw.replace(/,/g, ""));
+          transactions.push({
+            description: `Payment to ${receiver} `,
+            debit: amount,
+            credit: 0,
+          });
+          totalDebit += amount;
+        } else if (otherTransacB) {
+          const [_,receiver, amountRaw] = otherTransacB;
+          const amount = parseFloat(amountRaw.replace(/,/g, ""));
+          transactions.push({
+            description: `GCredit ${receiver} `,
+            debit: amount,
+            credit: 0,
+          });
+          totalDebit += amount;
+        } else if (otherTransacC){
+          const [_,receiver, amountRaw] = otherTransacC;
+          const amount = parseFloat(amountRaw.replace(/,/g, ""));
+          transactions.push({
+            description: `GGives ${receiver} `,
+            debit: amount,
+            credit: 0,
+          });
+          totalDebit += amount;
+        }else if (otherTransacD){
+          const [_,receiver, amountRaw] = otherTransacD;
+          const amount = parseFloat(amountRaw.replace(/,/g, ""));
+          transactions.push({
+            description: `Cash-out to ${receiver} `,
+            debit: amount,
+            credit: 0,
+          });
+          totalDebit += amount;
+        }
+     
+    //  const otherKeyB = ``;
+    //  const otherKey = `Refund from ${sender}`;
+     const key = `Transfer from ${sender} to ${receiver}`;
       if (!pairMap.has(key)) {
         pairMap.set(key, { count: 0, totalDebit: 0, totalCredit: 0 });
       }
@@ -66,6 +121,9 @@ const FileReader = ({ file }: { file: File | null }) => {
       group.count += 1;
       if (sender === myAccount) group.totalDebit += amount;
       if (receiver === myAccount) group.totalCredit += amount;
+      if (type.toLowerCase() === "refund") group.totalCredit += amount;
+      if(type.toLowerCase() === "payment" || type.toLowerCase() === "gcredit") group.totalDebit += amount;
+      // if(type.toLowerCase() === "gcredit") group.totalDebit += amount;
 
       // Contact grouping
       if (!contactTotals.has(sender)) {
@@ -81,6 +139,8 @@ const FileReader = ({ file }: { file: File | null }) => {
       const receiverData = contactTotals.get(receiver)!;
       receiverData.count += 1;
       if (receiver === myAccount) receiverData.totalCredit += amount;
+
+
     }
   }
 
@@ -130,7 +190,7 @@ const FileReader = ({ file }: { file: File | null }) => {
               const page = await pdf.getPage(pageNum);
               const content = await page.getTextContent();
               const pageText = content.items.map((item: any) => item.str).join(" ");
-              const cleanedText = pageText.replace(/(sent|received|Transfer|Payment)/gi, "\n$1");
+              const cleanedText = pageText.replace(/(sent|received|Transfer)/gi, "\n$1");
               fullText += cleanedText + "\n";
             }
 
@@ -172,6 +232,7 @@ const FileReader = ({ file }: { file: File | null }) => {
               <table border={1} cellPadding={6} style={{ borderCollapse: "collapse", width: "100%" }}>
                 <thead>
                   <tr>
+                    <th>#</th>
                     <th>Sender → Receiver</th>
                     <th>Number of Transactions</th>
                     <th>Total Debit</th>
@@ -181,6 +242,7 @@ const FileReader = ({ file }: { file: File | null }) => {
                 <tbody>
                   {summary.pairSummaries.map((item, index) => (
                     <tr key={index}>
+                      <td>{index + 1}</td>
                       <td>{item.pair}</td>
                       <td>{item.count}</td>
                       <td>{item.totalDebit.toLocaleString()}</td>
@@ -195,6 +257,31 @@ const FileReader = ({ file }: { file: File | null }) => {
           <p style={{ marginTop: "1.5rem" }}>
             Total Transactions: {summary.transactions.length}
           </p>
+          {summary.transactions && summary.transactions.length > 0 && (
+  <>
+          <h3 style={{ marginTop: "2rem" }}>All Individual Transactions</h3>
+          <table border={1} cellPadding={6} style={{ borderCollapse: "collapse", width: "100%" }}>
+            <thead>
+              <tr>
+                <th>Description</th>
+                <th>Debit</th>
+                <th>Credit</th>
+              </tr>
+            </thead>
+            <tbody>
+              {summary.transactions.map((tx, i) => (
+                <tr key={i}>
+                  <td>{tx.description}</td>
+                  <td>{tx.debit.toLocaleString()}</td>
+                  <td>{tx.credit.toLocaleString()}</td>
+
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </>
+      )}
+
         </>
       ) : (
         !error && <p>Processing PDF...</p>
