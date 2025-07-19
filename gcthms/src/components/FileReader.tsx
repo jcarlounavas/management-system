@@ -281,7 +281,7 @@ transactions.push({ description: transferDirection, debit: txDebit, credit: txCr
                   </tr>
                 </thead>
                 <tbody>
-                  {summary.pairSummaries.map((item, index) => (
+                  {summary.pairSummaries.sort((a,b) => b.count-a.count).map((item, index) => (
                     <tr key={index}>
                       <td>{index + 1}</td>
                       <td>{item.pair}</td>
@@ -290,14 +290,21 @@ transactions.push({ description: transferDirection, debit: txDebit, credit: txCr
                       <td>{item.totalCredit.toLocaleString()}</td>
                     </tr>
                   ))}
+                  <tr style={{ fontWeight: 'bold', backgroundColor: '#f0f0f0' }}>
+                    <td>Total</td>
+                    <td></td>
+                    <td>{summary.transactions.length}</td>
+                    <td>{summary.totalDebit.toLocaleString()}</td>
+                    <td>{summary.totalCredit.toLocaleString()}</td>
+                  </tr>
                 </tbody>
               </table>
             </>
           )}
 
-          <p style={{ marginTop: "1.5rem" }}>
+          {/* <p style={{ marginTop: "1.5rem" }}>
             Total Transactions: {summary.transactions.length}
-          </p>
+          </p> */}
           {summary.transactions && summary.transactions.length > 0 && (
   <>
           <h3 style={{ marginTop: "2rem" }}>All Individual Transactions</h3>
