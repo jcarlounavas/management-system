@@ -258,30 +258,30 @@ transactions.push({ description: transferDirection, debit: txDebit, credit: txCr
   }, [file]);
 
   return (
-    <div>
-      <h2>Transaction Summary</h2>
-      {error && <p>{error}</p>}
+<div className="transaction-summary-ui">
+  <h2 className="section-title">Transaction Summary</h2>
+  {error && <p className="error-text">{error}</p>}
 
-      {summary ? (
+  {summary ? (
+    <>
+      {summary.pairSummaries && summary.pairSummaries?.length > 0 && (
         <>
-
-
-          {/* Sender → Receiver Pair Summary */}
-          {summary.pairSummaries && summary.pairSummaries.length > 0 && (
-            <>
-              <h3 style={{ marginTop: "2rem" }}>By Sender → Receiver</h3>
-              <table border={1} cellPadding={6} style={{ borderCollapse: "collapse", width: "100%" }}>
-                <thead>
-                  <tr>
-                    <th>#</th>
-                    <th>Sender → Receiver</th>
-                    <th>Number of Transactions</th>
-                    <th>Total Debit</th>
-                    <th>Total Credit</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {summary.pairSummaries.sort((a,b) => b.count-a.count).map((item, index) => (
+          <h3 className="sub-title">By Sender → Receiver</h3>
+          <div className="table-wrapper">
+            <table className="data-table">
+              <thead>
+                <tr>
+                  <th>#</th>
+                  <th>Sender → Receiver</th>
+                  <th>Number of Transactions</th>
+                  <th>Total Debit</th>
+                  <th>Total Credit</th>
+                </tr>
+              </thead>
+              <tbody>
+                {summary.pairSummaries
+                  .sort((a, b) => b.count - a.count)
+                  .map((item, index) => (
                     <tr key={index}>
                       <td>{index + 1}</td>
                       <td>{item.pair}</td>
@@ -290,56 +290,55 @@ transactions.push({ description: transferDirection, debit: txDebit, credit: txCr
                       <td>{item.totalCredit.toLocaleString()}</td>
                     </tr>
                   ))}
-                  <tr style={{ fontWeight: 'bold', backgroundColor: '#f0f0f0' }}>
-                    <td>Total</td>
-                    <td></td>
-                    <td>{summary.transactions.length}</td>
-                    <td>{summary.totalDebit.toLocaleString()}</td>
-                    <td>{summary.totalCredit.toLocaleString()}</td>
-                  </tr>
-                </tbody>
-              </table>
-            </>
-          )}
-
-          {/* <p style={{ marginTop: "1.5rem" }}>
-            Total Transactions: {summary.transactions.length}
-          </p> */}
-          {summary.transactions && summary.transactions.length > 0 && (
-  <>
-          <h3 style={{ marginTop: "2rem" }}>All Individual Transactions</h3>
-          <table border={1} cellPadding={6} style={{ borderCollapse: "collapse", width: "100%" }}>
-            <thead>
-              <tr>
-                <th>Description</th>
-                <th>Debit</th>
-                <th>Credit</th>
-              </tr>
-            </thead>
-            <tbody>
-              {summary.transactions.map((tx, i) => (
-                <tr key={i}>
-                  <td>{tx.description}</td>
-                  <td>{tx.debit.toLocaleString()}</td>
-                  <td>{tx.credit.toLocaleString()}</td>
-
+                <tr className="table-footer">
+                  <td>Total</td>
+                  <td></td>
+                  <td>{summary.transactions.length}</td>
+                  <td>{summary.totalDebit.toLocaleString()}</td>
+                  <td>{summary.totalCredit.toLocaleString()}</td>
                 </tr>
-              ))}
-              <tr style={{ fontWeight: 'bold', backgroundColor: '#f0f0f0' }}>
-              <td>Total</td>
-              <td>{summary.totalDebit.toLocaleString()}</td>
-              <td>{summary.totalCredit.toLocaleString()}</td>
-            </tr>
-            </tbody>
-          </table>
+              </tbody>
+            </table>
+          </div>
         </>
       )}
 
+      {summary.transactions?.length > 0 && (
+        <>
+          <h3 className="sub-title">All Individual Transactions</h3>
+          <div className="table-wrapper">
+            <table className="data-table">
+              <thead>
+                <tr>
+                  <th>Description</th>
+                  <th>Debit</th>
+                  <th>Credit</th>
+                </tr>
+              </thead>
+              <tbody>
+                {summary.transactions.map((tx, i) => (
+                  <tr key={i}>
+                    <td>{tx.description}</td>
+                    <td>{tx.debit.toLocaleString()}</td>
+                    <td>{tx.credit.toLocaleString()}</td>
+                  </tr>
+                ))}
+                <tr className="table-footer">
+                  <td>Total</td>
+                  <td>{summary.totalDebit.toLocaleString()}</td>
+                  <td>{summary.totalCredit.toLocaleString()}</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
         </>
-      ) : (
-        !error && <p>Processing PDF...</p>
       )}
-    </div>
+    </>
+  ) : (
+    !error
+  )}
+</div>
+
   );
 };
 
