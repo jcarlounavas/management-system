@@ -8,20 +8,21 @@
 
 button {
   padding: 36px 60px;
-  font-size: 16px;
-  background-color: #4f46e5;
-  color: white;
+  font-size: 16px;  color: #1d4e89;
   border: none;
   border-radius: 8px;
   cursor: pointer;
   transition: background-color 0.3s ease;
   box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  border: 1px #41414196 solid;
 
 
 }
 
 button:hover {
   background-color: #2a2279;
+  color: #ffffff;
+    border: 4px #41414196 solid;
 }
 input{
   display: none;
@@ -73,7 +74,7 @@ input{
 }
 
 .data-table thead {
-  background-color: #f3f4f6;
+  background-color: #1982c4;
   color: #111827;
 }
 
@@ -89,7 +90,8 @@ input{
 }
 
 .data-table tbody tr:hover {
-  background-color: #eff6ff;
+  background-color: #1983c44b;
+  transition: ease-in .3s;
 }
 
 .table-footer {
