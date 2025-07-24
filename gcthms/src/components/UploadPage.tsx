@@ -1,10 +1,18 @@
-import React from 'react';
-import DashboardLayout from './DashboardLayout';
+// UploadPage.tsx
+import React, { useState } from 'react';
+import FileUploader from './FileUploader';
+import FileReader from './FileReader';
+import Sidebar from '../dist/dashboard/Sidebar';
+import DashboardLayout from '../dist/dashboard/DashboardLayout';
 
-const Dashboard: React.FC = () => {
+const UploadPage: React.FC = () => {
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
+
   return (
+    <>
+
     <DashboardLayout >
-          <div
+        <div
       data-pc-preset="preset-1"
       data-pc-sidebar-caption="false"
       data-pc-direction="ltr"
@@ -25,31 +33,23 @@ const Dashboard: React.FC = () => {
               <div className="row align-items-center">
                 <div className="col-md-12">
                   <div className="page-header-title">
-                    <h5 className="m-b-10">Dashboard</h5>
+                    <h5 className="m-b-10">Uploading Files</h5>
                   </div>
                 </div>
               </div>
             </div>
           </div>
-
-          {/* Example Cards */}
-          <div className="row">
-            <div className="col-md-6 col-xl-4">
-              <div className="card">
-                <div className="card-body">
-                  <h6 className="mb-4">Card Title</h6>
-                  <p className="mb-0">Content goes here</p>
-                </div>
-              </div>
-            </div>
-            {/* Add more cards or widgets as needed */}
-          </div>
+        <FileUploader onFileSelect={setSelectedFile}  />
+       <FileReader file={selectedFile} />
+        
         </div>
       </div>
     </div>
+        
     </DashboardLayout>
-
+      
+    </>
   );
 };
 
-export default Dashboard;
+export default UploadPage;

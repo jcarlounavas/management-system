@@ -11,7 +11,7 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children }) => {
     <div className="pc-wrapper d-flex">
       <Sidebar />
       <div className="pc-content w-100">
-        <Header />
+        {/* <Header /> */}
         <main className="page-wrapper">
           <div className="page-body">{children}</div>
         </main>

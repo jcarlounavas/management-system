@@ -16,7 +16,6 @@ button {
   box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
   border: 1px #41414196 solid;
 
-
 }
 
 button:hover {
@@ -97,4 +96,13 @@ input{
 .table-footer {
   font-weight: bold;
   background-color: #e0f2fe;
+}
+
+.btn-danger.transition {
+  transition: all 0.2s ease-in-out;
+}
+
+.btn-danger.transition:hover {
+  box-shadow: 0 0.5rem 1rem rgba(220, 53, 69, 0.25);
+  transform: scale(1.03);
 }

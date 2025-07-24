@@ -45,6 +45,16 @@ app.post('/api/transactions', async (req, res) => {
   }
 });
 
+app.get('/api/individuals', async (req, res) => {
+  try {
+    const [transactions] = await db.query('SELECT * FROM transactions');
+    res.json(transactions);
+  } catch (err) {
+    console.error("❌ MySQL select error:", err);
+    res.status(500).json({ error: 'Failed to fetch transactions' });
+  }
+});
+
 app.listen(PORT, () => {
   console.log(`🚀 Server running on http://localhost:${PORT}`);
 });
