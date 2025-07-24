@@ -53,6 +53,19 @@ const Register: React.FC = () => {
                   <input type="email" className="form-control" placeholder="Email Address" />
                 </div>
                 <div className="mb-3">
+                  <input
+                    type="text"
+                    inputMode="numeric"
+                    className="form-control"
+                    placeholder="Contact Number"
+                    maxLength={11}
+                    pattern="\d{11}"
+                    title="Please enter exactly 11 digits"
+                    required
+                  />
+                </div>
+
+                <div className="mb-3">
                   <input type="password" className="form-control" placeholder="Password" />
                 </div>
                 <div className="mb-3">

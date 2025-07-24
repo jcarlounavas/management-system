@@ -18,7 +18,7 @@ app.post('/api/transactions', async (req, res) => {
   }
 
   const values = transactions.map(tx => [
-    tx.tx_date,        // e.g., "2025-07-23 02:15:30 PM"
+    tx.tx_date,        
     tx.reference_no,
     tx.description,
     tx.debit,
@@ -45,13 +45,13 @@ app.post('/api/transactions', async (req, res) => {
   }
 });
 
-app.get('/api/individuals', async (req, res) => {
+app.get('/api/transactions', async (req, res) => {
   try {
-    const [transactions] = await db.query('SELECT * FROM transactions');
-    res.json(transactions);
+    const [rows] = await db.query('SELECT * FROM transactions');
+    res.json(rows);
   } catch (err) {
-    console.error("❌ MySQL select error:", err);
-    res.status(500).json({ error: 'Failed to fetch transactions' });
+    console.error('Database error:', err);
+    res.status(500).json({ error: 'Internal Server Error' });
   }
 });
 

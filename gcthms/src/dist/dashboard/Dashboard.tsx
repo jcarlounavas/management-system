@@ -37,11 +37,22 @@ const Dashboard: React.FC = () => {
             <div className="col-md-6 col-xl-4">
               <div className="card">
                 <div className="card-body">
-                  <h6 className="mb-4">Card Title</h6>
+                  <h1 className="mb-4">Total Debit</h1>
                   <p className="mb-0">Content goes here</p>
                 </div>
               </div>
+              
             </div>
+            <div className="col-md-6 col-xl-4">
+              <div className="card">
+                <div className="card-body">
+                  <h1 className="mb-4">Total Credit</h1>
+                  <p className="mb-0">Content goes here</p>
+                </div>
+              </div>
+              
+            </div>
+
             {/* Add more cards or widgets as needed */}
           </div>
         </div>

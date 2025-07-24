@@ -5,6 +5,9 @@ import Login from './forms/Login';
 import Register from "./forms/Register";
 import Dashboard from './dist/dashboard/Dashboard';
 import UploadPage from './components/UploadPage';
+import DisplayInditranc from './components/TransactionTable'
+import Contacts from './components/Contacts';
+
 import './dist/assets/css/style.css';
 import './dist/assets/js/plugins/popper.min.js';
 import './dist/assets/js/plugins/simplebar.min.js';
@@ -22,6 +25,8 @@ export default function App() {
         <Route path="/register" element={<Register />} />
         <Route path="/dashboard" element={<Dashboard />} />
         <Route path="/upload" element={<UploadPage />} />
+        <Route path="/individual" element={<DisplayInditranc />} />
+        <Route path="/contacts" element={<Contacts />} />
       </Routes>
     </Router>
   );

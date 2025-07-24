@@ -50,25 +50,25 @@ const Sidebar: React.FC = () => {
             {/* Future sections (color, typography, icons, etc.) can be uncommented and added as needed */}
 
             <li className={`pc-item ${isActive("/contacts") ? "active" : ""}`}>
-              <a href="#" target="_blank" className="pc-link">
-                <span className="pc-micon"><i className="ph ph-sign-out"></i></span>
-                <span className="pc-mtext">Contacts</span>
-              </a>
+              <Link to="/contacts" className="pc-link" >
+                    <span className="pc-micon"><i className="ph ph-sign-out"></i></span>
+                    <span className="pc-mtext">Contacts</span>
+                </Link>
             </li>
             <li className={`pc-item ${isActive("/summary") ? "active" : ""}`}>
-              <a href="#" target="_blank" className="pc-link">
-                <span className="pc-micon"><i className="ph ph-sign-out"></i></span>
-                <span className="pc-mtext">Transaction Summary</span>
-              </a>
+              <Link to="/summary" className="pc-link" >
+                    <span className="pc-micon"><i className="ph ph-sign-out"></i></span>
+                    <span className="pc-mtext">Summary Transactions</span>
+                </Link>
             </li>
-            <li className="pc-item">
-              <a href="#" target="_blank" className="pc-link">
-                <span className="pc-micon"><i className="ph ph-sign-out"></i></span>
-                <span className="pc-mtext">Reports</span>
-              </a>
+            <li className={`pc-item ${isActive("/individual") ? "active" : ""}`}>
+              <Link to="/individual" className="pc-link" >
+                    <span className="pc-micon"><i className="ph ph-sign-out"></i></span>
+                    <span className="pc-mtext">All Transactions</span>
+                </Link>
             </li>
             <li className={`pc-item ${isActive("/upload") ? "active" : ""}`}>
-                <Link to="/upload" className="pc-link" target="_blank">
+                <Link to="/upload" className="pc-link" >
                     <span className="pc-micon"><i className="ph ph-sign-out"></i></span>
                     <span className="pc-mtext">Upload Files</span>
                 </Link>

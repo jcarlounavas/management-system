@@ -4,6 +4,8 @@ import FileUploader from './FileUploader';
 import FileReader from './FileReader';
 import Sidebar from '../dist/dashboard/Sidebar';
 import DashboardLayout from '../dist/dashboard/DashboardLayout';
+import { Link, useLocation } from 'react-router-dom';
+
 
 const UploadPage: React.FC = () => {
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
@@ -12,39 +14,39 @@ const UploadPage: React.FC = () => {
     <>
 
     <DashboardLayout >
-        <div
+<div
       data-pc-preset="preset-1"
       data-pc-sidebar-caption="false"
       data-pc-direction="ltr"
       data-pc-theme="light"
     >
-      {/* Loader */}
-      <div className="loader-bg">
-        <div className="loader-track">
-          <div className="loader-fill"></div>
-        </div>
-      </div>
+            {/* Loader */}
+            <div className="loader-bg">
+                <div className="loader-track">
+                <div className="loader-fill"></div>
+                </div>
+            </div>
 
       {/* Dashboard Content */}
-      <div className="pc-container">
-        <div className="pc-content">
-          <div className="page-header">
-            <div className="page-block">
-              <div className="row align-items-center">
-                <div className="col-md-12">
-                  <div className="page-header-title">
-                    <h5 className="m-b-10">Uploading Files</h5>
-                  </div>
+            <div className="pc-container">
+                <div className="pc-content">
+                <div className="page-header">
+                    <div className="page-block">
+                    <div className="row align-items-center">
+                        <div className="col-md-12">
+                        <div className="page-header-title">
+                            <h5 className="m-b-10">Uploading Files</h5>
+                        </div>
+                        </div>
+                    </div>
+                    </div>
                 </div>
-              </div>
+                <FileUploader onFileSelect={setSelectedFile}  />
+                <FileReader file={selectedFile} />
+                
+                </div>
             </div>
-          </div>
-        <FileUploader onFileSelect={setSelectedFile}  />
-       <FileReader file={selectedFile} />
-        
-        </div>
-      </div>
-    </div>
+</div>
         
     </DashboardLayout>
       
