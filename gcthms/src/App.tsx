@@ -1,16 +1,22 @@
-import { useState } from "react";
-import './App.css';
-import FileUploader from './components/FileUploader';
-import FileReader from './components/FileReader';
+import React from 'react';
+import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
+import Login from './forms/Login';
+import Register from './forms/Register';
+import Dashboard from './dist/dashboard/Dashboard'; 
+import './dist/assets/css/style.css';
+
+
+
+
+
 export default function App() {
-  const [selectedFile, setSelectedFile] = useState<File | null>(null);
   return (
-    <div className="App">
-      <main>
-        <FileUploader onFileSelect={setSelectedFile}  />
-       <FileReader file={selectedFile} />
-      </main>
-    </div>
+    <Router>
+      <Routes>
+        <Route path="/" element={<Login />} />
+        <Route path="/register" element={<Register />} />
+        <Route path="/dashboard" element={<Dashboard />} />
+      </Routes>
+    </Router>
   );
 }
-

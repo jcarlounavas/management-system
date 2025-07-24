@@ -69,7 +69,7 @@ const FileReader = ({ file }: { file: File | null }) => {
       };
 
       for (const line of lines) {
-        const dateMatch = line.match(/\d{4}-\d{2}-\d{2}/);
+        const dateMatch = line.match(/\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2} (AM|PM)/i);
         const tx_date = dateMatch ? dateMatch[0] : "";
 
         const referenceMatch = line.match(/\b\d{13,}\b/);
