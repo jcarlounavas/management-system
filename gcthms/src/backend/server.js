@@ -1,70 +1,75 @@
+// src/backend/server.js
 const express = require('express');
 const cors = require('cors');
-const db = require('./db');
 const bcrypt = require('bcryptjs');
+const db = require('./db');
 
 const app = express();
-const port = 3000;
+const PORT = 3001;
 
 app.use(cors());
 app.use(express.json());
 
-// Health check endpoint
-app.get('/', (req, res) => {
-  res.send('✅ Server is running...');
-});
+// ✅ Register endpoint
+app.post('/api/register', async (req, res) => {
+  const { firstname, lastname, email, password } = req.body;
 
-// Register endpoint
-app.post('/register', async (req, res) => {
-  const { fullname, username, password } = req.body;
-  if (!fullname || !username || !password) {
-    return res.status(400).json({ message: 'All fields are required.' });
-  }
   try {
-    const [rows] = await db.query('SELECT id FROM users WHERE username = ?', [username]);
-    if (rows.length > 0) {
-      return res.status(400).json({ message: 'Username already exists.' });
+    // 1. Check if email already exists
+    const [existing] = await db.query('SELECT * FROM users WHERE email = ?', [email]);
+    if (existing.length > 0) {
+      return res.status(400).json({ error: 'Email already registered' });
     }
+
+    // 2. Hash the password
     const hashedPassword = await bcrypt.hash(password, 10);
+
+    // 3. Insert new user
     await db.query(
-      'INSERT INTO users (fullname, username, password_hash, created_at) VALUES (?, ?, ?, NOW())',
-      [fullname, username, hashedPassword]
+      'INSERT INTO users (firstname, lastname, email, password) VALUES (?, ?, ?, ?)',
+      [firstname, lastname, email, hashedPassword]
     );
-    res.json({ message: 'Registered successfully' });
+
+    res.json({ message: 'Registration successful' });
   } catch (err) {
-    res.status(500).json({ message: err.message });
+    console.error('Register Error:', err);
+    res.status(500).json({ error: 'Database error' });
   }
 });
 
-// Login endpoint
-app.post('/login', async (req, res) => {
-  const { username, password } = req.body;
-  if (!username || !password) {
-    return res.status(400).json({ message: 'All fields are required.' });
-  }
+// ✅ Login endpoint
+app.post('/api/login', async (req, res) => {
+  const { email, password } = req.body;
+
   try {
-    const [rows] = await db.query(
-      'SELECT fullname, username, password_hash FROM users WHERE username = ?',
-      [username]
-    );
-    if (rows.length === 0) {
-      return res.status(401).json({ message: 'Invalid credentials.' });
+    // 1. Find user by email
+    const [users] = await db.query('SELECT * FROM users WHERE email = ?', [email]);
+
+    if (users.length === 0) {
+      return res.status(401).json({ error: 'Invalid email or password' });
     }
-    const user = rows[0];
-    const passwordMatch = await bcrypt.compare(password, user.password_hash);
-    if (!passwordMatch) {
-      return res.status(401).json({ message: 'Invalid credentials.' });
+
+    const user = users[0];
+
+    // 2. Compare hashed password
+    const isMatch = await bcrypt.compare(password, user.password);
+    if (!isMatch) {
+      return res.status(401).json({ error: 'Invalid email or password' });
     }
+
+    // 3. Return user info (excluding password)
     res.json({
-      message: 'Logged in successfully',
-      user: { fullname: user.fullname, username: user.username }
+      id: user.id,
+      firstname: user.firstname,
+      lastname: user.lastname,
+      email: user.email,
     });
   } catch (err) {
-    res.status(500).json({ message: err.message });
+    console.error('Login Error:', err);
+    res.status(500).json({ error: 'Database error' });
   }
 });
 
-// Start server
-app.listen(port, () => {
-  console.log(`✅ Server running at http://localhost:${port}`);
+app.listen(PORT, () => {
+  console.log(`✅ Server running at http://localhost:${PORT}`);
 });
