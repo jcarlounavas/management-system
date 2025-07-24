@@ -10,10 +10,8 @@ const Sidebar: React.FC = () => {
   return (
     <nav className="pc-sidebar pc-trigger">
       <div className="navbar-wrapper " style={{ display: "block" }}>
-        <div className="m-header">
-          <Link to="/dashboard" className="b-brand text-primary">
-            <img src="/assets/images/logo-white.svg" className="img-fluid logo-lg" alt="logo" />
-          </Link>
+        <div className="m-header ph-text-align-center">
+            <h3>User</h3>
         </div>
         <div className="navbar-content pc-trigger active" data-simplebar="init">
           <div className="simplebar-wrapper" style={{margin: "-10px, 10px"}}>

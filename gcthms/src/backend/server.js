@@ -17,13 +17,30 @@ app.post('/api/transactions', async (req, res) => {
     return res.status(400).json({ error: 'Invalid format: Expected an array of transactions' });
   }
 
-  const values = transactions.map(tx => [
-    tx.tx_date,        
+  // Filter out transactions missing required fields
+  const validTransactions = transactions.filter(tx =>
+    tx.tx_date && tx.reference_no && tx.description
+  );
+
+  const skippedTransactions = transactions.filter(tx =>
+    !tx.tx_date || !tx.reference_no || !tx.description
+  );
+
+  if (skippedTransactions.length > 0) {
+    console.warn(`⚠️ Skipping ${skippedTransactions.length} invalid transaction(s):`, skippedTransactions);
+  }
+
+  if (validTransactions.length === 0) {
+    return res.status(400).json({ error: 'No valid transactions to insert.' });
+  }
+
+  const values = validTransactions.map(tx => [
+    tx.tx_date,
     tx.reference_no,
     tx.description,
-    tx.debit,
-    tx.credit,
-    tx.balance,
+    Number(tx.debit) || 0,
+    Number(tx.credit) || 0,
+    Number(tx.balance) || 0,
     tx.type,
     tx.sender,
     tx.receiver
@@ -46,14 +63,25 @@ app.post('/api/transactions', async (req, res) => {
 });
 
 app.get('/api/transactions', async (req, res) => {
+  const { startDate, endDate } = req.query;
+
   try {
-    const [rows] = await db.query('SELECT * FROM transactions');
+    let query = 'SELECT * FROM transactions';
+    const params = [];
+
+    if (startDate && endDate) {
+      query += ' WHERE tx_date BETWEEN ? AND ?';
+      params.push(startDate, endDate);
+    }
+
+    const [rows] = await db.query(query, params);
     res.json(rows);
   } catch (err) {
     console.error('Database error:', err);
     res.status(500).json({ error: 'Internal Server Error' });
   }
 });
+
 
 app.listen(PORT, () => {
   console.log(`🚀 Server running on http://localhost:${PORT}`);

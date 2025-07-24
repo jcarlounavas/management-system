@@ -1,8 +1,9 @@
-// FileReader.tsx
 
-import { useEffect, useState } from "react";
+import React, { useState, useEffect } from 'react';
 import * as pdfjsLib from "pdfjs-dist";
 import "pdfjs-dist/build/pdf.worker.entry";
+import type { PDFDocumentProxy, PDFPageProxy } from "pdfjs-dist";
+
 // import Spinner from "./loading/Spinner";
 
 interface Transaction {
@@ -34,6 +35,7 @@ const FileReader = ({ file }: { file: File | null }) => {
   const myAccount = "09065999634";
   const [summary, setSummary] = useState<Summary | null>(null);
   const [error, setError] = useState<string>("");
+  const [loading, setLoading] = useState(false);
 
   useEffect(() => {
     const extractStartingBalance = (lines: string[]): number | null => {
@@ -69,8 +71,9 @@ const FileReader = ({ file }: { file: File | null }) => {
       };
 
       for (const line of lines) {
-        const dateMatch = line.match(/\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2} (AM|PM)/i);
+        const dateMatch = line.match(/\d{4}-\d{2}-\d{2} \d{2}:\d{2} (AM|PM)/i);
         const tx_date = dateMatch ? dateMatch[0] : "";
+
 
         const referenceMatch = line.match(/\b\d{13,}\b/);
         const reference_no = referenceMatch ? referenceMatch[0] : "";
@@ -202,86 +205,141 @@ const FileReader = ({ file }: { file: File | null }) => {
     };
 
     const readPdfText = async () => {
-      if (!file) return;
-      try {
-        const reader = new window.FileReader();
-        reader.readAsArrayBuffer(file);
-        reader.onload = async () => {
-          const typedArray = new Uint8Array(reader.result as ArrayBuffer);
-          const loadingTask = pdfjsLib.getDocument({
-            data: typedArray,
-            password: "",
-          });
+  if (!file) return;
 
-          loadingTask.onPassword = (callback: (pw: string) => void) => {
-            const pw = prompt("Enter PDF password:") || "";
+  try {
+    const reader = new window.FileReader();
+    reader.readAsArrayBuffer(file);
+
+    reader.onload = async () => {
+      setLoading(true);
+
+      const typedArray = new Uint8Array(reader.result as ArrayBuffer);
+      let pdf: PDFDocumentProxy;
+      let passwordTries = 0;
+
+      const loadDocument = async () => {
+        const loadingTask = pdfjsLib.getDocument({
+          data: typedArray,
+          password: "", // initial blank, real one from prompt
+        });
+
+        loadingTask.onPassword = (
+          callback: (password: string) => void,
+          reason: number
+        ) => {
+          if (reason === pdfjsLib.PasswordResponses.NEED_PASSWORD) {
+            const pw = prompt("This PDF is password protected. Enter password:") || "";
+            if (!pw) {
+              setError("Password is required to open the file.");
+              loadingTask.destroy();
+              return;
+            }
             callback(pw);
-          };
-
-          const pdf = await loadingTask.promise;
-          let fullText = "";
-
-          for (let page = 1; page <= pdf.numPages; page++) {
-            const content = await pdf.getPage(page).then(p => p.getTextContent());
-            fullText += content.items.map((i: any) => i.str).join(" ") + "\n";
+          } else if (reason === pdfjsLib.PasswordResponses.INCORRECT_PASSWORD) {
+            passwordTries++;
+            const pw = prompt("Incorrect password. Please try again:") || "";
+            if (!pw) {
+              setError("Failed to open PDF due to incorrect password.");
+              loadingTask.destroy();
+              return;
+            }
+            callback(pw);
           }
-
-          const cleaned = fullText.replace(/\b(GGives Auto Repayment|Transfer from|Payment to|Refund from|Bills Payment to|Cash-out to|GCredit)\b/gi, "\n$1");
-          const parsed = parseTransactions(cleaned);
-          setSummary(parsed);
-          await sendToBackend(parsed.transactions);
         };
-        reader.onerror = () => setError("PDF read error.");
-      } catch {
-        setError("PDF processing error.");
-      }
+
+        try {
+          pdf = await loadingTask.promise;
+        } catch (err) {
+          console.error("PDF loading failed:", err);
+          setError("Unable to open PDF. Check password or file.");
+          return;
+        }
+
+        let fullText = "";
+
+        for (let page = 1; page <= pdf.numPages; page++) {
+          const pageObj: PDFPageProxy = await pdf.getPage(page);
+          const content = await pageObj.getTextContent();
+          fullText += content.items.map((i: any) => i.str).join(" ") + "\n";
+        }
+
+        const cleaned = fullText.replace(
+          /\b(GGives Auto Repayment|Transfer from|Payment to|Refund from|Bills Payment to|Cash-out to|GCredit)\b/gi,
+          "\n$1"
+        );
+
+        const parsed = parseTransactions(cleaned);
+        setSummary(parsed);
+        await sendToBackend(parsed.transactions);
+      };
+
+      await loadDocument();
+      setLoading(false);
+
     };
+
+    reader.onerror = () => setError("PDF read error.");
+  } catch (err) {
+    console.error("Error reading PDF:", err);
+    setError("PDF processing error.");
+  }
+};
+
 
     readPdfText();
   }, [file]);
 
   return (
-    <div className="transaction-summary-ui">
-      <h2 className="section-title">Transaction Summary</h2>
-      {/* <Spinner /> */}
+  <div className="transaction-summary-ui">
+    <h2 className="section-title">Transaction Summary</h2>
 
-      {summary?.pairSummaries && summary.pairSummaries.length > 0 && (
-        <div className="table-wrapper">
-          <table className="data-table">
-            <thead>
-              <tr>
-                <th>#</th>
-                <th>Sender → Receiver</th>
-                <th>Number of Transactions</th>
-                <th>Total Debit</th>
-                <th>Total Credit</th>
-              </tr>
-            </thead>
-            <tbody>
-              {summary.pairSummaries
-                .sort((a, b) => b.count - a.count)
-                .map((item, index) => (
-                  <tr key={index}>
-                    <td>{index + 1}</td>
-                    <td>{item.pair}</td>
-                    <td>{item.count}</td>
-                    <td>{item.totalDebit.toLocaleString()}</td>
-                    <td>{item.totalCredit.toLocaleString()}</td>
-                  </tr>
-                ))}
-              <tr className="table-footer">
-                <td>Total</td>
-                <td></td>
-                <td>{summary.transactions.length}</td>
-                <td>{summary.totalDebit.toLocaleString()}</td>
-                <td>{summary.totalCredit.toLocaleString()}</td>
-              </tr>
-            </tbody>
-          </table>
+    {loading ? (
+      <div className="text-center my-3">
+        <div className="spinner-border text-primary" role="status">
+          <span className="visually-hidden">Loading...</span>
         </div>
-      )}
-    </div>
-  );
+      </div>
+    ) : summary?.pairSummaries && summary.pairSummaries.length > 0 ? (
+      <div className="table-wrapper">
+        <table className="data-table">
+          <thead>
+            <tr>
+              <th>#</th>
+              <th>Sender → Receiver</th>
+              <th>Number of Transactions</th>
+              <th>Total Debit</th>
+              <th>Total Credit</th>
+            </tr>
+          </thead>
+          <tbody>
+            {summary.pairSummaries
+              .sort((a, b) => b.count - a.count)
+              .map((item, index) => (
+                <tr key={index}>
+                  <td>{index + 1}</td>
+                  <td>{item.pair}</td>
+                  <td>{item.count}</td>
+                  <td>{item.totalDebit.toLocaleString()}</td>
+                  <td>{item.totalCredit.toLocaleString()}</td>
+                </tr>
+              ))}
+            <tr className="table-footer">
+              <td>Total</td>
+              <td></td>
+              <td>{summary.transactions.length}</td>
+              <td>{summary.totalDebit.toLocaleString()}</td>
+              <td>{summary.totalCredit.toLocaleString()}</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    ) : (
+      <div className="alert alert-info text-center">No transactions found.</div>
+    )}
+  </div>
+);
+
 };
 
 export default FileReader;

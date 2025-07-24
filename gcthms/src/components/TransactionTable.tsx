@@ -1,8 +1,5 @@
-import React from 'react';
-import { useEffect, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import DashboardLayout from '../dist/dashboard/DashboardLayout';
-import { Link, useLocation } from 'react-router-dom';
-
 
 interface Transaction {
   tx_date: string;
@@ -18,62 +15,137 @@ interface Transaction {
 const TransactionTable: React.FC = () => {
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
+  const [startDate, setStartDate] = useState<string>('');
+  const [endDate, setEndDate] = useState<string>('');
 
   useEffect(() => {
     fetch('http://localhost:3001/api/transactions')
       .then((res) => res.json())
-      .then((data) => setTransactions(data))
+      .then((data) => {
+        const parsed = data.map((tx: any) => ({
+          ...tx,
+          debit: Number(tx.debit) || 0,
+          credit: Number(tx.credit) || 0,
+        }));
+        setTransactions(parsed);
+      })
       .catch((err) => console.error('Error fetching transactions:', err))
       .finally(() => setLoading(false));
   }, []);
 
+  // Filtered transactions by date range
+  const filteredTransactions = transactions.filter((tx) => {
+    if (!startDate && !endDate) return true;
+    const txDate = new Date(tx.tx_date);
+    const start = startDate ? new Date(startDate) : null;
+    const end = endDate ? new Date(endDate) : null;
+
+    if (start && end) return txDate >= start && txDate <= end;
+    if (start) return txDate >= start;
+    if (end) return txDate <= end;
+
+    return true;
+  });
+
+  const totalDebit = filteredTransactions.reduce((sum, tx) => sum + tx.debit, 0);
+  const totalCredit = filteredTransactions.reduce((sum, tx) => sum + tx.credit, 0);
+
   return (
     <DashboardLayout>
-      <div className="container mt-4">
-        <h4 className="mb-4">Transactions</h4>
+      <div
+        data-pc-preset="preset-1"
+        data-pc-sidebar-caption="false"
+        data-pc-direction="ltr"
+        data-pc-theme="light"
+      >
+        <div className="loader-bg">
+          <div className="loader-track">
+            <div className="loader-fill"></div>
+          </div>
+        </div>
 
-        {loading ? (
-          <div className="text-center">
-            <div className="spinner-border text-primary" role="status">
-              <span className="visually-hidden">Loading...</span>
+        <div className="pc-container">
+          <div className="pc-content">
+            <div className="page-header">
+              <div className="page-block">
+                <div className="card-header">
+                  <h1 className="text-center">All Transactions</h1>
+                </div>
+              </div>
+            </div>
+
+            <div className="container">
+              {/* Date Filters */}
+              <div className="row mb-4">
+                <div className="col-md-4">
+                  <label className="form-label">Start Date</label>
+                  <input
+                    type="date"
+                    className="form-control"
+                    value={startDate}
+                    onChange={(e) => setStartDate(e.target.value)}
+                  />
+                </div>
+                <div className="col-md-4">
+                  <label className="form-label">End Date</label>
+                  <input
+                    type="date"
+                    className="form-control"
+                    value={endDate}
+                    onChange={(e) => setEndDate(e.target.value)}
+                  />
+                </div>
+              </div>
+
+              {loading ? (
+                <div className="text-center">
+                  <div className="spinner-border text-primary" role="status">
+                    <span className="visually-hidden">Loading...</span>
+                  </div>
+                </div>
+              ) : filteredTransactions.length === 0 ? (
+                <div className="alert alert-info text-center">No transactions found.</div>
+              ) : (
+                <div className="table-responsive">
+                  <table className="table table-bordered table-striped">
+                    <thead className="table-primary">
+                      <tr>
+                        <th>Date</th>
+                        <th>Reference No</th>
+                        <th>Description</th>
+                        <th>Type</th>
+                        <th>Sender</th>
+                        <th>Receiver</th>
+                        <th>Debit</th>
+                        <th>Credit</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {filteredTransactions.map((tx, index) => (
+                        <tr key={index}>
+                          <td>{tx.tx_date}</td>
+                          <td>{tx.reference_no}</td>
+                          <td>{tx.description}</td>
+                          <td>{tx.type}</td>
+                          <td>{tx.sender}</td>
+                          <td>{tx.receiver}</td>
+                          <td>{tx.debit.toFixed(2)}</td>
+                          <td>{tx.credit.toFixed(2)}</td>
+                        </tr>
+                      ))}
+                      <tr className="table-secondary fw-bold">
+                        <td><h4>Total</h4></td>
+                        <td colSpan={5}></td>
+                        <td>{totalDebit.toFixed(2)}</td>
+                        <td>{totalCredit.toFixed(2)}</td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+              )}
             </div>
           </div>
-        ) : transactions.length === 0 ? (
-          <div className="alert alert-info text-center">
-            No transactions found.
-          </div>
-        ) : (
-          <div className="table-responsive">
-            <table className="table table-bordered table-striped">
-              <thead className="table-primary">
-                <tr>
-                  <th>Date</th>
-                  <th>Reference No</th>
-                  <th>Description</th>
-                  <th>Type</th>
-                  <th>Sender</th>
-                  <th>Receiver</th>
-                  <th>Debit</th>
-                  <th>Credit</th>
-                </tr>
-              </thead>
-              <tbody>
-                {transactions.map((tx, index) => (
-                  <tr key={index}>
-                    <td>{tx.tx_date}</td>
-                    <td>{tx.reference_no}</td>
-                    <td>{tx.description}</td>
-                    <td>{tx.type}</td>
-                    <td>{tx.sender}</td>
-                    <td>{tx.receiver}</td>
-                    <td>{tx.debit.toFixed(2)}</td>
-                    <td>{tx.credit.toFixed(2)}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        )}
+        </div>
       </div>
     </DashboardLayout>
   );

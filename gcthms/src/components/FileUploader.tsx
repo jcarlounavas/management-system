@@ -1,6 +1,5 @@
 import React, { useRef } from "react";
 
-
 interface Props {
   onFileSelect: (file: File) => void;
 }

@@ -30,17 +30,7 @@ const UploadPage: React.FC = () => {
       {/* Dashboard Content */}
             <div className="pc-container">
                 <div className="pc-content">
-                <div className="page-header">
-                    <div className="page-block">
-                    <div className="row align-items-center">
-                        <div className="col-md-12">
-                        <div className="page-header-title">
-                            <h5 className="m-b-10">Uploading Files</h5>
-                        </div>
-                        </div>
-                    </div>
-                    </div>
-                </div>
+                
                 <FileUploader onFileSelect={setSelectedFile}  />
                 <FileReader file={selectedFile} />
                 
