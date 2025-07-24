@@ -4,7 +4,7 @@ import DashboardLayout from '../dist/dashboard/DashboardLayout';
 import { Link, useLocation } from 'react-router-dom';
 
 
-interface Transaction {
+interface SummaryTransaction {
   tx_date: string;
   description: string;
   reference_no: string;
@@ -15,12 +15,12 @@ interface Transaction {
   receiver: string;
 }
 
-const TransactionTable: React.FC = () => {
-  const [transactions, setTransactions] = useState<Transaction[]>([]);
+const SummaryTransaction: React.FC = () => {
+  const [transactions, setTransactions] = useState<SummaryTransaction[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
 
   useEffect(() => {
-    fetch('http://localhost:3001/api/transactions')
+    fetch('http://localhost:3001/api/summarytransactions')
       .then((res) => res.json())
       .then((data) => setTransactions(data))
       .catch((err) => console.error('Error fetching transactions:', err))
@@ -30,7 +30,7 @@ const TransactionTable: React.FC = () => {
   return (
     <DashboardLayout>
       <div className="container mt-4">
-        <h4 className="m-b-10 badge bg-brand-color-2 text-white f-24 mt-4 ms-2 px-3 py-2">Transactions</h4>
+        <h4 className="m-b-10 badge bg-brand-color-2 text-white f-24 mt-4 ms-2 px-3 py-2" >Summary Transactions</h4>
 
         {loading ? (
           <div className="text-center">
@@ -79,4 +79,4 @@ const TransactionTable: React.FC = () => {
   );
 };
 
-export default TransactionTable;
+export default SummaryTransaction;

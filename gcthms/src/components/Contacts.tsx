@@ -17,7 +17,7 @@ const Contacts: React.FC = () => {
                     <div className="loader-fill"></div>
                     </div>
                 </div>
-        <div className="pc-container">
+        
         <div className="pc-content">
           <div className="page-header">
             <div className="page-block">
@@ -96,7 +96,7 @@ const Contacts: React.FC = () => {
                       </h6>
                     </td>
                     <td>
-                      <a href="#!" className="badge me-2 bg-brand-color-2 text-white f-12">
+                      <a href="#!" className="badge me-2 bg-brand-color-2 text-white f-12 badge bg-brand-color-2 text-white f-12 mt-4 ms-2">
                         See All Transactions
                       </a>
 
@@ -113,7 +113,7 @@ const Contacts: React.FC = () => {
       </div>
         
         </div>
-      </div>
+  
     
     
     </div>

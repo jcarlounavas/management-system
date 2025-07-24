@@ -11,6 +11,7 @@ import Contacts from './components/Contacts';
 import './dist/assets/css/style.css';
 import './dist/assets/js/plugins/popper.min.js';
 import './dist/assets/js/plugins/simplebar.min.js';
+import SummaryTransaction from './components/SummaryTransaction';
 
 
 
@@ -27,6 +28,7 @@ export default function App() {
         <Route path="/upload" element={<UploadPage />} />
         <Route path="/individual" element={<DisplayInditranc />} />
         <Route path="/contacts" element={<Contacts />} />
+        <Route path="/summary" element={<SummaryTransaction />} />
       </Routes>
     </Router>
   );

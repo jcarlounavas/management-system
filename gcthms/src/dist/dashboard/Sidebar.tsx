@@ -1,22 +1,21 @@
 import React from 'react';
 import { Link, useLocation } from 'react-router-dom';
+interface SidebarProps {
+  isSidebarHidden: boolean;
+}
 
-const Sidebar: React.FC = () => {
+const Sidebar: React.FC <SidebarProps> = ({ isSidebarHidden }) => {
     const location = useLocation();
 
     const isActive = (path: string) => location.pathname === path;
 
 
   return (
-    <nav className="pc-sidebar pc-trigger">
+    <nav className={`pc-sidebar pc-trigger ${isSidebarHidden ? "collapsed" : ""}`}>
       <div className="navbar-wrapper " style={{ display: "block" }}>
-        <div className="m-header">
-          <Link to="/dashboard" className="b-brand text-primary">
-            <img src="/assets/images/logo-white.svg" className="img-fluid logo-lg" alt="logo" />
-          </Link>
-        </div>
         <div className="navbar-content pc-trigger active" data-simplebar="init">
           <div className="simplebar-wrapper" style={{margin: "-10px, 10px"}}>
+
                 <div className="simplebar-height-auto-observer-wrapper">
                     <div className="simplebar-height-auto-observer"></div>
                 </div>
@@ -30,12 +29,22 @@ const Sidebar: React.FC = () => {
                         style={{ height: "100%", overflow: "hidden" }}
                         >
                         <div className="simplebar-content" style={{ padding: "10px 0px" }}></div>
+                        <div
+                        className="user-profile d-flex align-items-center px-3 mb-4"
+                        style={{ cursor: 'pointer' }}
+                        onClick={() => alert('Profile clicked!')}
+                      >
+                        <img
+                          src="https://i.pravatar.cc/40"
+                          alt="User Avatar"
+                          style={{ borderRadius: '50%', width: 32, height: 32, marginRight: 8, flexShrink: 0,}}
+                        />
+                        <div>
+                          <div style={{ fontWeight: '600', color: '#fff' }}>USER</div>
+                          <small style={{ fontSize: 12, color: '#ccc' }}>View Profile</small>
                         </div>
-                    </div>
-                    </div>
-
-
-            <ul className="pc-navbar" style={{display: "block"}}>
+                      </div>
+<ul className="pc-navbar" style={{display: "block"}}>
             <li className="pc-item pc-caption">
               <label data-i18n="Navigation">Navigation</label>
             </li>
@@ -87,13 +96,20 @@ const Sidebar: React.FC = () => {
 
 
           </ul>
+            
+                    </div>
+                        </div>
+                    </div>
+                    </div>
+
+
+            
           </div>
 
 
         </div>
-      </div>
-    </nav>
-    
+      </nav>
+ 
   );
 };
 
