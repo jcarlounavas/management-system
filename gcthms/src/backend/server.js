@@ -12,22 +12,25 @@ app.use(express.json());
 
 // ✅ Register endpoint
 app.post('/api/register', async (req, res) => {
-  const { firstname, lastname, email, password } = req.body;
+  const { firstname, lastname, email, password, contact_number } = req.body;
 
   try {
-    // 1. Check if email already exists
-    const [existing] = await db.query('SELECT * FROM users WHERE email = ?', [email]);
+    // Check if email or contact_number already exists
+    const [existing] = await db.query(
+      'SELECT * FROM users WHERE email = ? OR contact_number = ?',
+      [email, contact_number]
+    );
     if (existing.length > 0) {
-      return res.status(400).json({ error: 'Email already registered' });
+      return res.status(400).json({ error: 'Email or contact number already registered' });
     }
 
-    // 2. Hash the password
+    // Hash the password
     const hashedPassword = await bcrypt.hash(password, 10);
 
-    // 3. Insert new user
+    // Insert new user
     await db.query(
-      'INSERT INTO users (firstname, lastname, email, password) VALUES (?, ?, ?, ?)',
-      [firstname, lastname, email, hashedPassword]
+      'INSERT INTO users (firstname, lastname, email, contact_number, password) VALUES (?, ?, ?, ?, ?)',
+      [firstname, lastname, email, contact_number, hashedPassword]
     );
 
     res.json({ message: 'Registration successful' });
@@ -42,7 +45,7 @@ app.post('/api/login', async (req, res) => {
   const { email, password } = req.body;
 
   try {
-    // 1. Find user by email
+    // Find user by email
     const [users] = await db.query('SELECT * FROM users WHERE email = ?', [email]);
 
     if (users.length === 0) {
@@ -51,18 +54,19 @@ app.post('/api/login', async (req, res) => {
 
     const user = users[0];
 
-    // 2. Compare hashed password
+    // Compare hashed password
     const isMatch = await bcrypt.compare(password, user.password);
     if (!isMatch) {
       return res.status(401).json({ error: 'Invalid email or password' });
     }
 
-    // 3. Return user info (excluding password)
+    // Return user info (excluding password)
     res.json({
       id: user.id,
       firstname: user.firstname,
       lastname: user.lastname,
       email: user.email,
+      contact_number: user.contact_number,
     });
   } catch (err) {
     console.error('Login Error:', err);
