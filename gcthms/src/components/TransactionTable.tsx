@@ -107,21 +107,22 @@ const TransactionTable: React.FC = () => {
             No transactions found.
           </div>
         ) : (
-          <div className="table-responsive">
-            <table className="table table-bordered table-striped">
-              <thead className="table-primary">
+          <div className="table-responsive shadow rounded-4">
+          
+            <table className="table table-hover align-middle text-center table-striped border rounded-4 overflow-hidden text-dark fw-medium">
+              <thead className="bg-primary text-white">
                 <tr>
-                  <th>Date</th>
-                  <th>Reference No</th>
-                  <th>Description</th>
-                  <th>Type</th>
-                  <th>Sender</th>
-                  <th>Receiver</th>
-                  <th>Debit</th>
-                  <th>Credit</th>
+                  <th className="py-3 px-2 text-white">Date</th>
+                  <th className="py-3 px-2 text-white">Reference No</th>
+                  <th className="py-3 px-2 text-white">Description</th>
+                  <th className="py-3 px-2 text-white">Type</th>
+                  <th className="py-3 px-2 text-white">Sender</th>
+                  <th className="py-3 px-2 text-white">Receiver</th>
+                  <th className="py-3 px-2 text-white">Debit</th>
+                  <th className="py-3 px-2 text-white">Credit</th>
                 </tr>
               </thead>
-              <tbody>
+              <tbody className ="bg-white">
                 {transactions.filter(tx => {
                     const txDate = new Date(tx.tx_date); // Convert string to real Date object
 
@@ -140,14 +141,14 @@ const TransactionTable: React.FC = () => {
                   })
                     .map((tx, index) => (
                   <tr key={index}>
-                    <td>{tx.tx_date}</td>
-                    <td>{tx.reference_no}</td>
-                    <td>{tx.description}</td>
-                    <td>{tx.type}</td>
-                    <td>{tx.sender}</td>
-                    <td>{tx.receiver}</td>
-                    <td>{Number(tx.debit || 0).toFixed(2)}</td>
-                    <td>{Number(tx.credit || 0).toFixed(2)}</td>
+                    <td className="py-3 px-2">{tx.tx_date}</td>
+                    <td className="py-3 px-2">{tx.reference_no}</td>
+                    <td className="py-3 px-2">{tx.description}</td>
+                    <td className="py-3 px-2 text-capitalize">{tx.type}</td>
+                    <td className="py-3 px-2">{tx.sender}</td>
+                    <td className="py-3 px-2">{tx.receiver}</td>
+                    <td className="py-3 px-2 text-danger fw-semibold">{Number(tx.debit || 0).toFixed(2)}</td>
+                    <td className="py-3 px-2 text-success fw-semibold">{Number(tx.credit || 0).toFixed(2)}</td>
                   </tr>
                 ))}
               </tbody>

@@ -36,7 +36,7 @@ const Sidebar: React.FC <SidebarProps> = ({ isSidebarHidden }) => {
                         onClick={() => alert('Profile clicked!')}
                       >
                         <img
-                          src="./dashboard/UserAvatar.png"
+                          src="../UserAvatar.png"
                            className="rounded-circle mb-3 shadow"
                             width="100"
                             height="100"

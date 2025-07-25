@@ -37,9 +37,58 @@ const Contacts: React.FC = () => {
         </div>
         <div className="card-body px-0 py-3">
           <div className="table-responsive">
-            <table className="table table-hover mb-0">
+            <table className="table table-hover mb-0 text-center align-middle">
               <tbody>
-                {[
+<tr>
+            <th className ="text-white">Name / Email</th>
+            <th className ="text-white">Phone</th>
+            <th  className ="text-white">Total Transactions</th>
+            <th className ="text-white">Action</th>
+          </tr>
+          </tbody>
+        <tbody>
+          <tr>
+            <td>
+              <div>
+                <strong>Isabella Christensen</strong>
+                <div className="text-muted small">isabella@mail.com</div>
+              </div>
+            </td>
+            <td>+628123456789</td>
+            <td>12</td>
+            <td>
+              <span className="badge bg-primary">See All Transactions</span>
+            </td>
+          </tr>
+          <tr>
+            <td>
+              <div>
+                <span className="text-muted fst-italic">No Name</span>
+                <div className="text-muted small fst-italic">No Email</div>
+              </div>
+            </td>
+            <td>+628987654321</td>
+            <td>3</td>
+            <td>
+              <span className="badge bg-primary">See All Transactions</span>
+            </td>
+          </tr>
+          <tr>
+            <td>
+              <div>
+                <strong>Albert Andersen</strong>
+                <div className="text-muted small">albert@mail.com</div>
+              </div>
+            </td>
+            <td>+628334455667</td>
+            <td>5</td>
+            <td>
+              <span className="badge bg-primary">See All Transactions</span>
+            </td>
+          </tr>
+
+
+{/* {[
                   {
                     name: 'Isabella Christensen',
                     desc: 'Lorem Ipsum is simply dummy',
@@ -102,7 +151,7 @@ const Contacts: React.FC = () => {
 
                     </td>
                   </tr>
-                ))}
+                ))} */}
               </tbody>
             </table>
           </div>

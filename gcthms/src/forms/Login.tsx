@@ -38,9 +38,9 @@ const Login: React.FC = () => {
             </div>
             <div className="card mb-0">
               <div className="card-body">
-                <div className="text-center">
+                {/* <div className="text-center">
                   <img src="/assets/images/logo-dark.svg" alt="logo" />
-                </div>
+                </div> */}
                 <h4 className="text-center f-w-500 mt-4 mb-3">Login</h4>
                 <div className="mb-3">
                   <input type="email" className="form-control" placeholder="Email Address" />
