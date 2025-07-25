@@ -69,7 +69,11 @@ const AuthForm: React.FC<{ onLogin: (user: any) => void }> = ({ onLogin }) => {
             <input
               placeholder="Contact Number"
               value={contactNumber}
-              onChange={(e) => setContactNumber(e.target.value)}
+              onChange={(e) => {
+             const onlyNums = e.target.value.replace(/\D/g, '');
+            if (onlyNums.length <= 11) setContactNumber(onlyNums);
+          }}
+               maxLength={11}
               required
             />
           </>
