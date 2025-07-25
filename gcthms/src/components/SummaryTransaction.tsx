@@ -2,7 +2,8 @@ import React from 'react';
 import { useEffect, useState } from 'react';
 import DashboardLayout from '../dist/dashboard/DashboardLayout';
 import { Link, useLocation } from 'react-router-dom';
-
+import DatePicker from 'react-datepicker';
+import 'react-datepicker/dist/react-datepicker.css';
 
 interface SummaryTransaction {
   tx_date: string;
@@ -16,6 +17,11 @@ interface SummaryTransaction {
 }
 
 const SummaryTransaction: React.FC = () => {
+  const [searchTerm, setSearchTerm] = useState('');
+  const [startDate, setStartDate] = useState<Date | null>(null);
+  const [endDate, setEndDate] = useState<Date | null>(null);
+  const [transactionType, setTransactionType] = useState('All');
+
   const [transactions, setTransactions] = useState<SummaryTransaction[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
 
@@ -31,7 +37,61 @@ const SummaryTransaction: React.FC = () => {
     <DashboardLayout>
       <div className="container mt-4">
         <h4 className="m-b-10 badge bg-brand-color-2 text-white f-24 mt-4 ms-2 px-3 py-2" >Summary Transactions</h4>
+        <div className="d-flex gap-3 flex-wrap mb-4">
+      <input
+        type="text"
+        placeholder="Search description..."
+        className="form-control"
+        style={{ maxWidth: 200 }}
+        value={searchTerm}
+        onChange={(e) => setSearchTerm(e.target.value)}
+      />
 
+      <DatePicker
+  selected={startDate || undefined}
+  onChange={(date) => setStartDate(date)}
+  selectsStart
+  startDate={startDate || undefined}
+  endDate={endDate || undefined}
+  placeholderText="Start date"
+  className="form-control"
+/>
+
+<DatePicker
+  selected={endDate || undefined}
+  onChange={(date) => setEndDate(date)}
+  selectsEnd
+  startDate={startDate || undefined}
+  endDate={endDate || undefined}
+  minDate={startDate || undefined}
+  placeholderText="End date"
+  className="form-control"
+/>
+
+
+      <select
+        className="form-select"
+        style={{ maxWidth: 160 }}
+        value={transactionType}
+        onChange={(e) => setTransactionType(e.target.value)}
+      >
+        <option value="All">All Types</option>
+        <option value="Credit">Credit</option>
+        <option value="Debit">Debit</option>
+      </select>
+
+      <button
+        className="btn btn-secondary"
+        onClick={() => {
+          setSearchTerm('');
+          setStartDate(null);
+          setEndDate(null);
+          setTransactionType('All');
+        }}
+      >
+        Reset
+      </button>
+    </div>
         {loading ? (
           <div className="text-center">
             <div className="spinner-border text-primary" role="status">

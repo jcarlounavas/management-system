@@ -1,6 +1,7 @@
 import React, { ReactNode, useState } from "react";
 import Sidebar from "./Sidebar";
-import Header from "./Header";
+import Header from "./Header";  
+import { FormatIndentDecrease, FormatIndentIncrease  } from '@mui/icons-material';
 
 interface DashboardLayoutProps {
   children: ReactNode;
@@ -14,7 +15,7 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children }) => {
 const toggleSidebar = () => setIsSidebarHidden(prev => !prev);
 
   return (
-    <div className="pc-wrapper d-flex">
+    <div className="pc-wrapper d-flex" >
        <Sidebar isSidebarHidden={isSidebarHidden} />
       <div className="pc-content w-100" style={{
     marginLeft: isSidebarHidden ? 0 : 260,
@@ -33,11 +34,12 @@ const toggleSidebar = () => setIsSidebarHidden(prev => !prev);
     border: "none",
     borderRadius: "4px",
     padding: "6px 10px",
+    marginLeft: "15px",
     cursor: "pointer",
     transition: "left 0.3s ease",
   }}
 >
-  {isSidebarHidden ? "➡" : "⬅"}
+  {isSidebarHidden ? <FormatIndentIncrease/> : <FormatIndentDecrease/> }
 </button>
         {/* <Header /> */}
         <main className="page-wrapper">

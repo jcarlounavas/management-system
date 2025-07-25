@@ -1,5 +1,6 @@
 import React from 'react';
-import { Link, useLocation } from 'react-router-dom';
+import { Link, useLocation } from 'react-router-dom'; 
+import { Dashboard, Contacts, UploadFile, ListAlt } from '@mui/icons-material';
 interface SidebarProps {
   isSidebarHidden: boolean;
 }
@@ -30,17 +31,20 @@ const Sidebar: React.FC <SidebarProps> = ({ isSidebarHidden }) => {
                         >
                         <div className="simplebar-content" style={{ padding: "10px 0px" }}></div>
                         <div
-                        className="user-profile d-flex align-items-center px-3 mb-4"
+                        className="user-profile text-white py-4 px-3 d-flex flex-column align-items-center  mb-4"
                         style={{ cursor: 'pointer' }}
                         onClick={() => alert('Profile clicked!')}
                       >
                         <img
-                          src="https://i.pravatar.cc/40"
+                          src="./dashboard/UserAvatar.png"
+                           className="rounded-circle mb-3 shadow"
+                            width="100"
+                            height="100"
                           alt="User Avatar"
-                          style={{ borderRadius: '50%', width: 32, height: 32, marginRight: 8, flexShrink: 0,}}
                         />
                         <div>
-                          <div style={{ fontWeight: '600', color: '#fff' }}>USER</div>
+                          <div ><h6 className="mb-1  text-white fw-bold fs-6">USER</h6></div>
+
                           <small style={{ fontSize: 12, color: '#ccc' }}>View Profile</small>
                         </div>
                       </div>
@@ -51,7 +55,7 @@ const Sidebar: React.FC <SidebarProps> = ({ isSidebarHidden }) => {
 
             <li className={`pc-item ${isActive("/dashboard") ? "active" : ""}`}>
               <Link to="/dashboard" className="pc-link">
-                <span className="pc-micon"><i className="ph ph-house-line"></i></span>
+                <span className="pc-micon"><Dashboard /></span>
                 <span className="pc-mtext" data-i18n="Dashboard">Dashboard</span>
               </Link>
             </li>
@@ -60,25 +64,25 @@ const Sidebar: React.FC <SidebarProps> = ({ isSidebarHidden }) => {
 
             <li className={`pc-item ${isActive("/contacts") ? "active" : ""}`}>
               <Link to="/contacts" className="pc-link" >
-                    <span className="pc-micon"><i className="ph ph-sign-out"></i></span>
+                    <span className="pc-micon"><Contacts /></span>
                     <span className="pc-mtext">Contacts</span>
                 </Link>
             </li>
             <li className={`pc-item ${isActive("/summary") ? "active" : ""}`}>
               <Link to="/summary" className="pc-link" >
-                    <span className="pc-micon"><i className="ph ph-sign-out"></i></span>
+                    <span className="pc-micon"><ListAlt /></span>
                     <span className="pc-mtext">Summary Transactions</span>
                 </Link>
             </li>
             <li className={`pc-item ${isActive("/individual") ? "active" : ""}`}>
               <Link to="/individual" className="pc-link" >
-                    <span className="pc-micon"><i className="ph ph-sign-out"></i></span>
+                    <span className="pc-micon"><ListAlt /></span>
                     <span className="pc-mtext">All Transactions</span>
                 </Link>
             </li>
             <li className={`pc-item ${isActive("/upload") ? "active" : ""}`}>
                 <Link to="/upload" className="pc-link" >
-                    <span className="pc-micon"><i className="ph ph-sign-out"></i></span>
+                    <span className="pc-micon"><UploadFile /></span>
                     <span className="pc-mtext">Upload Files</span>
                 </Link>
                 </li>

@@ -33,9 +33,6 @@ const UploadPage: React.FC = () => {
                     <div className="page-block">
                     <div className="row align-items-center">
                         <div className="col-md-12">
-                        <div className="page-header-title">
-                            <h5 className="m-b-10 badge bg-brand-color-2 text-white f-24 mt-4 ms-2 px-3 py-2">Uploading Files</h5>
-                        </div>
                         </div>
                     </div>
                     </div>
