@@ -136,6 +136,50 @@ app.get('/summary/transactions', async (req, res) => {
 
 
 
+app.get('/api/summary/:id/totals', async (req, res) => {
+  const summaryId = req.params.id;
+
+  if (!summaryId) {
+    return res.status(400).json({ error: 'Missing summary ID' });
+  }
+
+  try {
+    const [rows] = await db.query(
+      `SELECT 
+         SUM(debit) AS total_debit,
+         SUM(credit) AS total_credit
+       FROM transactions
+       WHERE summary_id = ?`,
+      [summaryId]
+    );
+
+    const totals = rows[0] || { total_debit: 0, total_credit: 0 };
+    res.json(totals);
+  } catch (err) {
+    console.error('Error fetching totals by summary ID:', err);
+    res.status(500).json({ error: 'Failed to fetch totals by summary ID' });
+  }
+});
+
+app.get('/api/summary', async (req, res) => {
+  try {
+    const [summaries] = await db.query(`SELECT id, file_name FROM summary ORDER BY id DESC`);
+    res.json(summaries);
+  } catch (err) {
+    console.error('Error fetching summaries:', err);
+    res.status(500).json({ error: 'Failed to fetch summaries' });
+  }
+});
+
+app.get('/api/summary/count', async (req, res) => {
+  try {
+    const [rows] = await db.query('SELECT COUNT(*) AS total_summaries FROM summary');
+    res.json(rows[0]);  // returns { total_summaries: N }
+  } catch (err) {
+    console.error('Error fetching summary count:', err);
+    res.status(500).json({ error: 'Failed to fetch summary count' });
+  }
+});
 
 
 

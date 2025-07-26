@@ -30,8 +30,9 @@ const UploadPage: React.FC = () => {
       {/* Dashboard Content */}
             <div className="pc-container">
                 <div className="pc-content">
-                
+                <div className="d-flex justify-content-center mt-3">
                 <FileUploader onFileSelect={setSelectedFile}  />
+                </div>
                 <FileReader file={selectedFile} />
                 
                 </div>

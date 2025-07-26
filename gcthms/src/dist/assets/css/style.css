@@ -16518,9 +16518,7 @@ pre[class*=language-] > code {
 .layout-2 .pc-footer {
   background: var(--bs-body-bg);
 }
-.layout-2 .pc-container {
-  padding-top: 140px;
-}
+
 .layout-2 .pc-container .pc-content {
   background: var(--bs-body-bg);
   min-height: calc(100vh - 273px);
@@ -17259,7 +17257,7 @@ pre[class*=language-] > code {
 .pc-container {
   position: relative;
   top: 74px;
-  margin-left: 264px;
+  margin-left: 20px;
   min-height: calc(100vh - 140px);
 }
 .pc-container .pc-content {

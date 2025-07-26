@@ -1,7 +1,53 @@
-import React from 'react';
+import React, { useState, useEffect }from 'react';
 import DashboardLayout from './DashboardLayout';
+import Card from '../../components/Card';
+
+
+interface Summary {
+  id: number;
+  file_name: string;
+}
 
 const Dashboard: React.FC = () => {
+  const [summaries, setSummaries] = useState<Summary[]>([]);
+  const [summaryId, setSummaryId] = useState<number | null>(null);
+  const [totals, setTotals] = useState({ total_debit: 0, total_credit: 0 });
+const [totalTransactions, setTotalTransactions] = useState(0);
+const [totalSummaries, setTotalSummaries] = useState(0);
+
+//summary Dropdown
+  useEffect(() => {
+    fetch('http://localhost:3001/api/summary')
+      .then((res) => res.json())
+      .then((data) => {
+        setSummaries(data);
+        if (data.length > 0) setSummaryId(data[0].id); // default: first summary
+      });
+  }, []);
+
+  useEffect(() => {
+    if (!summaryId) return;
+
+    fetch(`http://localhost:3001/api/summary/${summaryId}/totals`)
+      .then((res) => res.json())
+      .then((data) => {
+        setTotals({
+          total_debit: data.total_debit || 0,
+          total_credit: data.total_credit || 0,
+        });
+      })
+      .catch((err) => console.error('Failed to fetch totals:', err));
+
+    fetch(`http://localhost:3001/api/summary/${summaryId}/transactions`)
+        .then((res) => res.json())
+        .then((data) => setTotalTransactions(data.length));
+
+fetch('http://localhost:3001/api/summary/count')
+    .then((res) => res.json())
+    .then((data) => setTotalSummaries(data.total_summaries || 0));
+  }, [summaryId]);
+
+
   return (
     <DashboardLayout >
           <div
@@ -18,12 +64,12 @@ const Dashboard: React.FC = () => {
       </div>
 
       {/* Dashboard Content */}
-      <div className="pc-container">
+      <div className="container" style={{ paddingTop: "75px", paddingLeft : "30px", paddingRight: "20px" }}>
         <div className="pc-content">
           <div className="page-header">
             <div className="page-block">
               <div className="row align-items-center">
-                <div className="col-md-12">
+                <div className="col-md-6">
                   <div className="page-header-title">
                     <h5 className="m-b-10">Dashboard</h5>
                   </div>
@@ -33,31 +79,40 @@ const Dashboard: React.FC = () => {
           </div>
 
           {/* Example Cards */}
-          <div className="row">
-            <div className="col-md-6 col-xl-4">
-              <div className="card">
-                <div className="card-body">
-                  <h1 className="mb-4">Total Debit</h1>
-                  <p className="mb-0">Content goes here</p>
-                </div>
-              </div>
-              
-            </div>
-            <div className="col-md-6 col-xl-4">
-              <div className="card">
-                <div className="card-body">
-                  <h1 className="mb-4">Total Credit</h1>
-                  <p className="mb-0">Content goes here</p>
-                </div>
-              </div>
-              
-            </div>
+          <div className="mb-4">
+          <label htmlFor="summarySelect" className="form-label">Select Summary:</label>
+          <select
+            id="summarySelect"
+            className="form-select"
+            value={summaryId ?? ''}
+            onChange={(e) => setSummaryId(parseInt(e.target.value))}
+          >
+            {summaries.map((summary) => (
+              <option key={summary.id} value={summary.id}>
+                {summary.file_name} (ID: {summary.id})
+              </option>
+            ))}
+          </select>
+        </div>
 
-            {/* Add more cards or widgets as needed */}
+        {/* Totals */}
+        <div className="row">
+          <div className="col-md-4 col-xl-4">
+            <Card title="Total Debit" body={`₱${totals.total_debit.toLocaleString()}`} />
           </div>
+          <div className="col-md-4 col-xl-4">
+            <Card title="Total Credit" body={`₱${totals.total_credit.toLocaleString()}`} />
+          </div>
+          <div className="col-md-4 col-xl-4">
+            <Card title="Total Transactions" body={`${totalTransactions}`} />
+        </div>
+         <div className="col-md-4 col-xl-4">
+            <Card title="File Uploaded" body={`${totalSummaries}`} />
         </div>
       </div>
-    </div>
+      </div>
+      </div>
+      </div>
     </DashboardLayout>
 
   );

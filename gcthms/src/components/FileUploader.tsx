@@ -1,5 +1,5 @@
 import React, { useRef } from "react";
-
+import '../dist/assets/css/FileUpload.css';
 interface Props {
   onFileSelect: (file: File) => void;
 }
@@ -21,7 +21,7 @@ export default function FileUploader({ onFileSelect }: Props) {
   };
 
   return (
-    <div className="upload-container">
+    <label className="upload-container">
       <input
         type="file"
         accept=".pdf"
@@ -29,9 +29,17 @@ export default function FileUploader({ onFileSelect }: Props) {
         ref={fileInputRef}
         
       />
-      <button type="button" onClick={handleButtonClick}>
+       <div className="folder">
+        <div className="front-side">
+          <div className="tip" />
+          <div className="cover" />
+        </div>
+        <div className="back-side cover" />
+      </div>
+  <div className="custom-file-upload">
         Upload PDF File
-      </button>
-    </div>
+      </div>
+
+    </label>
   );
 }
