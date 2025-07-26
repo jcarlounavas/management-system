@@ -37,9 +37,10 @@ const UploadPage: React.FC = () => {
                     </div>
                     </div>
                 </div>
+                  <div className="d-flex justify-content-center mt-3">
                 <FileUploader onFileSelect={setSelectedFile}  />
+                </div>
                 <FileReader file={selectedFile} />
-                
            </div>     
 </div>
         
