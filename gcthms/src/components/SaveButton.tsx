@@ -54,6 +54,7 @@ const SaveButton: React.FC<SaveButtonProps> = ({ fileName, summary }) => {
       const responseData = await summaryResponse.json();
       console.log("Summary saved successfully:", responseData);
       alert("Summary and transactions saved successfully.");
+      window.location.reload();
     } catch (error) {
       console.error("Save failed:", error);
       alert("Failed to save summary and transactions.");

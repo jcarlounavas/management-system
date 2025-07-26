@@ -1,50 +1,42 @@
 import React, { useEffect, useState } from 'react';
 import DashboardLayout from '../dist/dashboard/DashboardLayout';
-import { useParams } from 'react-router-dom';
 
-interface PairSummary {
-  pair: string;
-  count: number;
-  totalCredit: number;
+interface Summary {
+  summary_id: number;
+  created_at: string;
+  transaction_count: number;
   totalDebit: number;
+  totalCredit: number;
 }
 
-const DisplaySummary: React.FC = () => {
-  const { id } = useParams<{ id: string }>(); // ✅ Get the summary ID from URL
-  const [summary, setSummary] = useState<any>(null);
-  const [loading, setLoading] = useState(true);
+const Summary: React.FC = () => {
+  const [summaries, setSummaries] = useState<Summary[]>([]);
 
   useEffect(() => {
-    if (!id) return;
+    fetch('http://localhost:3001/summary/transactions')
+      .then((res) => res.json())
+      .then((data) => {
+        setSummaries(data.summaries || []);
+      })
+      .catch((err) => console.error('Fetch error:', err));
+  }, []);
 
-    const fetchSummary = async () => {
-      try {
-        const res = await fetch(`http://localhost:3001/api/summary/${id}/transactions`);
-        if (!res.ok) throw new Error(`HTTP error! Status: ${res.status}`);
-        const data = await res.json();
-        setSummary(data);
-      } catch (err) {
-        console.error("Failed to fetch summary:", err);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchSummary();
-  }, [id]);
+  const totalTransactions = summaries.reduce((sum, s) => sum + s.transaction_count, 0);
+  const totalDebit = summaries.reduce((sum, s) => sum + s.totalDebit, 0);
+  const totalCredit = summaries.reduce((sum, s) => sum + s.totalCredit, 0);
 
   return (
     <DashboardLayout>
-      <div
+            <div
         data-pc-preset="preset-1"
         data-pc-sidebar-caption="false"
         data-pc-direction="ltr"
         data-pc-theme="light"
       >
         <div className="loader-bg">
-          <div className="loader-track">
-            <div className="loader-fill"></div>
-          </div>
+            <div className="loader-track">
+              <div className="loader-fill"></div>
+            </div>
         </div>
 
         <div className="pc-container">
@@ -52,63 +44,57 @@ const DisplaySummary: React.FC = () => {
             <div className="page-header">
               <div className="page-block">
                 <div className="card-header">
-                  <h1 className="text-center">Summary Transaction</h1>
+                  <h1 className="text-center">All Transactions</h1>
                 </div>
               </div>
             </div>
 
-            <div className="container my-4">
-              {loading ? (
-                <div className="text-center">
-                  <div className="spinner-border text-primary" role="status">
-                    <span className="visually-hidden">Loading...</span>
-                  </div>
-                </div>
-              ) : summary?.pairSummaries && summary.pairSummaries.length > 0 ? (
-                <div className="table-responsive">
-                  <table className="table table-bordered">
-                    <thead>
-                      <tr>
-                        <th>ID</th>
-                        <th>Sender → Receiver</th>
-                        <th>Number of Transactions</th>
-                        <th>Total Debit</th>
-                        <th>Total Credit</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {summary.pairSummaries
-                        .sort((a: PairSummary, b: PairSummary) => b.count - a.count)
-                        .map((item: PairSummary, index: number) => (
-                          <tr key={index}>
-                            <td>{index + 1}</td>
-                            <td>{item.pair}</td>
-                            <td>{item.count}</td>
-                            <td>{item.totalDebit.toLocaleString()}</td>
-                            <td>{item.totalCredit.toLocaleString()}</td>
-                          </tr>
-                        ))}
-                      <tr className="table-primary fw-bold">
-                        <td>Total</td>
-                        <td></td>
-                        <td>{summary.transactions.length}</td>
-                        <td>{summary.totalDebit.toLocaleString()}</td>
-                        <td>{summary.totalCredit.toLocaleString()}</td>
-                      </tr>
-                    </tbody>
-                  </table>
-                </div>
-              ) : (
-                <div className="alert alert-info text-center">
-                  No summary data available.
-                </div>
-              )}
-            </div>
+            <div className="transaction-summary-ui">
+        <h2 className="section-title">Transaction Summary</h2>
+
+        {summaries.length > 0 ? (
+          <div className="table-wrapper">
+            <table className="data-table">
+              <thead>
+                <tr>
+                  <th>Summary ID</th>
+                  <th>Created At</th>
+                  <th>Number of Transactions</th>
+                  <th>Total Debit</th>
+                  <th>Total Credit</th>
+                </tr>
+              </thead>
+              <tbody>
+                {summaries.map((item, index) => (
+                  <tr key={item.summary_id}>
+                    <td>{item.summary_id}</td>
+                    <td>{new Date(item.created_at).toLocaleString()}</td>
+                    <td>{item.transaction_count}</td>
+                    <td>{item.totalDebit.toLocaleString()}</td>
+                    <td>{item.totalCredit.toLocaleString()}</td>
+                  </tr>
+                ))}
+                {/* <tr className="table-footer">
+                  <td colSpan={3}>Total</td>
+                  <td>{totalTransactions}</td>
+                  <td>{totalDebit.toLocaleString()}</td>
+                  <td>{totalCredit.toLocaleString()}</td>
+                </tr> */}
+              </tbody>
+            </table>
+          </div>
+        ) : (
+          <div className="alert alert-info text-center">No transactions found.</div>
+        )}
+      </div>
           </div>
         </div>
       </div>
+
+
+      
     </DashboardLayout>
   );
 };
 
-export default DisplaySummary;
+export default Summary;

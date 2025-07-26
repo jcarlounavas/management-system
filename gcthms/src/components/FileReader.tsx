@@ -287,7 +287,7 @@ const FileReader = ({ file }: { file: File | null }) => {
         const parsed = parseTransactions(cleaned);
 
 
-                const transactionsWithFileName = parsed.transactions.map(tx => ({
+          const transactionsWithFileName = parsed.transactions.map(tx => ({
           ...tx,
           file_name: fileName,
         }));

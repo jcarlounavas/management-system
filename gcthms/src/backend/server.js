@@ -20,7 +20,7 @@ app.post('/api/summary', async (req, res) => {
   }
 
   try {
-    // STEP 1: Insert summary
+    // STEP 1: Insert into summary
     const [result] = await db.query(
       `INSERT INTO summary (file_name, total_transaction)
        VALUES (?, ?)`,
@@ -29,44 +29,65 @@ app.post('/api/summary', async (req, res) => {
 
     const summaryId = result.insertId;
 
-    // STEP 2: If transactions exist, insert them
-    if (Array.isArray(transactions) && transactions.length > 0) {
-      const validTransactions = transactions.filter(
-        (tx) =>
-          tx.tx_date &&
-          tx.description &&
-          tx.reference_no
-      );
+    // STEP 2: Filter valid transactions and log skipped ones
+    const validTransactions = [];
+    const skippedTransactions = [];
 
-      if (validTransactions.length > 0) {
-        const values = validTransactions.map((tx) => [
-          tx.tx_date,
-          tx.description,
-          tx.reference_no,
-          tx.debit ?? 0,
-          tx.credit ?? 0,
-          tx.balance ?? 0,
-          tx.type ?? '',
-          tx.sender ?? '',
-          tx.receiver ?? '',
-          summaryId
-        ]);
-
-        await db.query(
-          `INSERT INTO transactions
-           (tx_date, description, reference_no, debit, credit, balance, type, sender, receiver, summary_id)
-           VALUES ?`,
-          [values]
-        );
+    transactions.forEach((tx, index) => {
+      if (tx.tx_date && tx.description && tx.reference_no) {
+        validTransactions.push(tx);
+      } else {
+        skippedTransactions.push({ index, tx });
       }
+    });
+
+    if (skippedTransactions.length > 0) {
+      console.warn("Skipped invalid transactions:", skippedTransactions.length);
+      console.table(
+        skippedTransactions.map(({ index, tx }) => ({
+          index,
+          tx_date: tx.tx_date,
+          description: tx.description,
+          reference_no: tx.reference_no,
+        }))
+      );
     }
 
-    res.status(201).json({ summaryId, message: "Summary and any valid transactions saved." });
+    // STEP 3: Insert valid transactions
+    if (validTransactions.length > 0) {
+      const values = validTransactions.map((tx) => [
+        tx.tx_date,
+        tx.description,
+        tx.reference_no,
+        tx.debit ?? 0,
+        tx.credit ?? 0,
+        tx.balance ?? 0,
+        tx.type ?? '',
+        tx.sender ?? '',
+        tx.receiver ?? '',
+        summaryId,
+      ]);
+
+      await db.query(
+        `INSERT INTO transactions
+         (tx_date, description, reference_no, debit, credit, balance, type, sender, receiver, summary_id)
+         VALUES ?`,
+        [values]
+      );
+    }
+
+    res.status(201).json({
+      summaryId,
+      message: "Summary and any valid transactions saved.",
+      inserted: validTransactions.length,
+      skipped: skippedTransactions.length,
+    });
   } catch (err) {
     console.error("Insert error:", err);
     res.status(500).json({ error: "Failed to save summary and transactions" });
   }
 });
+
 
 
 // GET: All Transactions (optional date filtering)
@@ -90,37 +111,39 @@ app.get('/api/transactions', async (req, res) => {
 });
 
 //GET Summary
-app.get('/api/summary/:id/transactions', async (req, res) => {
-  const summaryId = req.params.id;
-  console.log('Incoming request for summary ID:', summaryId);
-
-  if (!summaryId) {
-    return res.status(400).json({ error: 'Missing summary ID' });
-  }
-
+app.get('/summary/transactions', async (req, res) => {
   try {
-    const [transactions] = await db.query(
-      'SELECT * FROM transactions WHERE summary_id = ? ORDER BY tx_date ASC',
-      [summaryId]
-    );
+    const [summaries] = await db.query(`
+      SELECT 
+        s.id AS summary_id,
+        s.created_at,
+        COUNT(t.id) AS transaction_count,
+        IFNULL(SUM(t.debit), 0) AS totalDebit,
+        IFNULL(SUM(t.credit), 0) AS totalCredit
+      FROM summary s
+      LEFT JOIN transactions t ON t.summary_id = s.id
+      GROUP BY s.id
+      ORDER BY s.id DESC
+    `);
 
-    console.log('Transactions fetched:', transactions);
+    res.json({ summaries }); // renamed from { summary } to { summaries }
 
-    if (!transactions || transactions.length === 0) {
-      return res.status(404).json({ error: 'No transactions found for this summary ID' });
-    }
-
-    res.json(transactions);
   } catch (err) {
-    console.error('Fetch error:', err);
-    res.status(500).json({ error: 'Failed to fetch transactions' });
+    console.error('Error fetching summary:', err);
+    res.status(500).json({ error: 'Internal server error' });
   }
 });
 
 
 
 
+
+
+
+
+
+
 // Start Server
 app.listen(PORT, () => {
-  console.log(`🚀 Server running on http://localhost:${PORT}`);
+  console.log(` Server running on http://localhost:${PORT}`);
 });
