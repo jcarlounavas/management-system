@@ -3,10 +3,11 @@ import React, { useState, useEffect } from 'react';
 import * as pdfjsLib from "pdfjs-dist";
 import "pdfjs-dist/build/pdf.worker.entry";
 import type { PDFDocumentProxy, PDFPageProxy } from "pdfjs-dist";
+import SaveButton from './SaveButton';
 
 // import Spinner from "./loading/Spinner";
 
-interface Transaction {
+export interface Transaction {
   tx_date: string;
   description: string;
   reference_no: string;
@@ -18,11 +19,12 @@ interface Transaction {
   receiver: string;
 }
 
-interface Summary {
+export interface Summary {
   transactions: Transaction[];
   totalCredit: number;
   totalDebit: number;
   totalBalance: number;
+  fileName: string; 
   pairSummaries?: {
     pair: string;
     count: number;
@@ -32,12 +34,22 @@ interface Summary {
 }
 
 const FileReader = ({ file }: { file: File | null }) => {
+  const [fileName, setFileName] = useState<string>('');
   const myAccount = "09065999634";
   const [summary, setSummary] = useState<Summary | null>(null);
   const [error, setError] = useState<string>("");
   const [loading, setLoading] = useState(false);
+  const [uploadedFile, setUploadedFile] = useState<File | null>(null);
+  const [transactions, setTransactions] = useState<Transaction[]>([]);
+
+
+
 
   useEffect(() => {
+    if (file) {
+    setUploadedFile(file);
+    setFileName(file.name); 
+  }
     const extractStartingBalance = (lines: string[]): number | null => {
       for (const line of lines) {
         if (/starting balance/i.test(line)) {
@@ -179,6 +191,7 @@ const FileReader = ({ file }: { file: File | null }) => {
       }
 
       return {
+        fileName,
         transactions,
         totalCredit,
         totalDebit,
@@ -190,19 +203,19 @@ const FileReader = ({ file }: { file: File | null }) => {
       };
     };
 
-    const sendToBackend = async (txs: Transaction[]) => {
-      try {
-        const res = await fetch("http://localhost:3001/api/transactions", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(txs),
-        });
-        const result = await res.json();
-        console.log("POST success");
-      } catch (err) {
-        console.error("POST failed:", err);
-      }
-    };
+    // const sendToBackend = async (txs: Transaction[]) => {
+    //   try {
+    //     const res = await fetch("http://localhost:3001/api/transactions", {
+    //       method: "POST",
+    //       headers: { "Content-Type": "application/json" },
+    //       body: JSON.stringify(txs),
+    //     });
+    //     const result = await res.json();
+    //     console.log("POST success");
+    //   } catch (err) {
+    //     console.error("POST failed:", err);
+    //   }
+    // };
 
     const readPdfText = async () => {
   if (!file) return;
@@ -269,9 +282,17 @@ const FileReader = ({ file }: { file: File | null }) => {
           "\n$1"
         );
 
+        
+
         const parsed = parseTransactions(cleaned);
-        setSummary(parsed);
-        await sendToBackend(parsed.transactions);
+
+
+                const transactionsWithFileName = parsed.transactions.map(tx => ({
+          ...tx,
+          file_name: fileName,
+        }));
+        setSummary({ ...parsed, fileName: file.name });
+        // await sendToBackend(transactionsWithFileName);
       };
 
       await loadDocument();
@@ -294,6 +315,7 @@ const FileReader = ({ file }: { file: File | null }) => {
   <div className="transaction-summary-ui">
     <h2 className="section-title">Transaction Summary</h2>
 
+  <form>
     {loading ? (
       <div className="text-center my-3">
         <div className="spinner-border text-primary" role="status">
@@ -337,6 +359,20 @@ const FileReader = ({ file }: { file: File | null }) => {
     ) : (
       <div className="alert alert-info text-center">No transactions found.</div>
     )}
+  </form>
+    
+
+    {summary && (
+  <SaveButton
+    summary={summary}
+    fileName={uploadedFile?.name || ''}
+  />
+)}
+
+
+
+
+
   </div>
 );
 

@@ -17,6 +17,15 @@ const TransactionTable: React.FC = () => {
   const [loading, setLoading] = useState<boolean>(true);
   const [startDate, setStartDate] = useState<string>('');
   const [endDate, setEndDate] = useState<string>('');
+  
+  const formatDate = (dateStr: string) => {
+  const date = new Date(dateStr);
+  const day = String(date.getDate()).padStart(2, '0');
+  const month = String(date.getMonth() + 1).padStart(2, '0'); // Month is zero-indexed
+  const year = String(date.getFullYear()).slice(-2); // Get last two digits
+  return `${day}-${month}-${year}`; // ddmmyy
+};
+
 
   useEffect(() => {
     fetch('http://localhost:3001/api/transactions')
@@ -59,9 +68,9 @@ const TransactionTable: React.FC = () => {
         data-pc-theme="light"
       >
         <div className="loader-bg">
-          <div className="loader-track">
-            <div className="loader-fill"></div>
-          </div>
+            <div className="loader-track">
+              <div className="loader-fill"></div>
+            </div>
         </div>
 
         <div className="pc-container">
@@ -123,7 +132,7 @@ const TransactionTable: React.FC = () => {
                     <tbody>
                       {filteredTransactions.map((tx, index) => (
                         <tr key={index}>
-                          <td>{tx.tx_date}</td>
+                          <td>{formatDate(tx.tx_date)}</td>
                           <td>{tx.reference_no}</td>
                           <td>{tx.description}</td>
                           <td>{tx.type}</td>

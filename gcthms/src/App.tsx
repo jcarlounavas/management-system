@@ -7,6 +7,7 @@ import Dashboard from './dist/dashboard/Dashboard';
 import UploadPage from './components/UploadPage';
 import DisplayInditranc from './components/TransactionTable'
 import Contacts from './components/Contacts';
+import DisplaySummary from './components/Summary';
 
 import './dist/assets/css/style.css';
 
@@ -26,6 +27,8 @@ export default function App() {
         <Route path="/upload" element={<UploadPage />} />
         <Route path="/individual" element={<DisplayInditranc />} />
         <Route path="/contacts" element={<Contacts />} />
+        <Route path="/summary" element={<DisplaySummary />} />
+
       </Routes>
     </Router>
   );

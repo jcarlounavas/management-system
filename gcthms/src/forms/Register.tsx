@@ -62,9 +62,10 @@ const Register: React.FC = () => {
                     pattern="\d{11}"
                     title="Please enter exactly 11 digits"
                     required
+                    
                   />
                 </div>
-
+                
                 <div className="mb-3">
                   <input type="password" className="form-control" placeholder="Password" />
                 </div>
