@@ -33,9 +33,12 @@ export interface Summary {
   }[];
 }
 
-const FileReader = ({ file }: { file: File | null }) => {
+
+
+const FileReader = ({ file, accNum }: { file: File | null, accNum: string }) => {
+
   const [fileName, setFileName] = useState<string>('');
-  const myAccount = "09065999634";
+  const myAccount = accNum;
   const [summary, setSummary] = useState<Summary | null>(null);
   const [error, setError] = useState<string>("");
   const [loading, setLoading] = useState(false);

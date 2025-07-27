@@ -173,7 +173,7 @@ app.get('/api/summary', async (req, res) => {
 
 app.get('/api/summary/count', async (req, res) => {
   try {
-    const [rows] = await db.query('SELECT COUNT(*) AS total_summaries FROM summary');
+    const [rows] = await db.query('SELECT COUNT(*) AS total_transactions FROM summary');
     res.json(rows[0]);  // returns { total_summaries: N }
   } catch (err) {
     console.error('Error fetching summary count:', err);

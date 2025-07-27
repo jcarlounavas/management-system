@@ -27,7 +27,7 @@ export default function FileUploader({ onFileSelect }: Props) {
         accept=".pdf"
         onChange={handleFileChange}
         ref={fileInputRef}
-        
+        onClick={handleButtonClick}
       />
        <div className="folder">
         <div className="front-side">

@@ -6,6 +6,7 @@ import Card from '../../components/Card';
 interface Summary {
   id: number;
   file_name: string;
+  transaction_count: number;
 }
 
 const Dashboard: React.FC = () => {
