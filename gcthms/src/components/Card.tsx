@@ -4,76 +4,93 @@ import styled from 'styled-components';
 interface CardProps {
   title: string;
   body: string;
+  showButton?: boolean;
+  color?: string; // base color (like brand color)
 }
 
-const Card: React.FC<CardProps> = ({ title, body }) => {
+const Card: React.FC<CardProps> = ({
+  title,
+  body,
+  showButton = false,
+  color = '#0d6efd', // Bootstrap primary as brand color
+}) => {
   return (
-    <StyledWrapper>
+    <StyledWrapper color={color}>
       <div className="card">
         <div className="card-details">
           <p className="text-title">{title}</p>
           <p className="text-body">{body}</p>
         </div>
-        <button className="card-button">More info</button>
+        {showButton && <button className="card-button">More info</button>}
       </div>
     </StyledWrapper>
   );
 };
 
-const StyledWrapper = styled.div`
+const StyledWrapper = styled.div<{ color: string }>`
   .card {
-    width: 190px;
-    height: 254px;
-    border-radius: 20px;
-    background: #f5f5f5;
-    position: relative;
-    padding: 1.8rem;
-    border: 2px solid #c3c6ce;
-    transition: 0.5s ease-out;
-    overflow: visible;
-  }
-
+  width: 100%;
+  min-width: 300px;
+  min-height: 220px;
+  border-radius: 2rem;
+  background: ${(props) => props.color};
+  color: #fff;
+  padding: 2rem;
+  position: relative;
+  text-align: center;
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.2);
+  transition: transform 0.3s ease-out, box-shadow 0.3s ease-out;
+}
   .card-details {
-    color: black;
-    height: 100%;
-    gap: 0.5em;
-    display: grid;
-    place-content: center;
-  }
-
-  .card-button {
-    transform: translate(-50%, 125%);
-    width: 60%;
-    border-radius: 1rem;
-    border: none;
-    background-color: #008bf8;
-    color: #fff;
-    font-size: 1rem;
-    padding: 0.5rem 1rem;
-    position: absolute;
-    left: 50%;
-    bottom: 0;
-    opacity: 0;
-    transition: 0.3s ease-out;
-  }
-
-  .text-body {
-    color: rgb(134, 134, 134);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.25rem;
   }
 
   .text-title {
-    font-size: 1.5em;
-    font-weight: bold;
+    font-size: 2rem;
+    font-weight: 500;
+    opacity: 0.9;
+  }
+
+  .text-body {
+    font-size: 4rem;
+    font-weight: 700;
+    line-height: 1.2;
+  }
+
+  .card-button {
+    position: absolute;
+    bottom: -2rem;
+    left: 50%;
+    transform: translateX(-50%);
+    background: rgba(255, 255, 255, 0.2);
+    color: #fff;
+    border: none;
+    border-radius: 1rem;
+    padding: 0.4rem 1rem;
+    font-size: 0.9rem;
+    backdrop-filter: blur(4px);
+    cursor: pointer;
+    opacity: 0;
+    transition: all 0.3s ease;
   }
 
   .card:hover {
-    border-color: #008bf8;
-    box-shadow: 0 4px 18px 0 rgba(0, 0, 0, 0.25);
+    transform: translateY(-2px);
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.25);
   }
 
   .card:hover .card-button {
-    transform: translate(-50%, 50%);
     opacity: 1;
+    bottom: -1.5rem;
+  }
+
+  @media (max-width: 768px) {
+    .text-body {
+      font-size: 2rem;
+    }
   }
 `;
 

@@ -17,7 +17,8 @@ const TransactionTable: React.FC = () => {
   const [loading, setLoading] = useState<boolean>(true);
   const [startDate, setStartDate] = useState<string>('');
   const [endDate, setEndDate] = useState<string>('');
-  
+  const [searchTerm, setSearchTerm] = useState<string>('');
+  const [selectedType, setSelectedType] = useState<string>('All');
   const formatDate = (dateStr: string) => {
   const date = new Date(dateStr);
   const day = String(date.getDate()).padStart(2, '0');
@@ -44,20 +45,33 @@ const TransactionTable: React.FC = () => {
 
   // Filtered transactions by date range
   const filteredTransactions = transactions.filter((tx) => {
-    if (!startDate && !endDate) return true;
+    
     const txDate = new Date(tx.tx_date);
     const start = startDate ? new Date(startDate) : null;
     const end = endDate ? new Date(endDate) : null;
+    
+    const matchesDate =
+    (!start && !end) ||
+    (start && end && txDate >= start && txDate <= end) ||
+    (start && !end && txDate >= start) ||
+    (!start && end && txDate <= end);
 
-    if (start && end) return txDate >= start && txDate <= end;
-    if (start) return txDate >= start;
-    if (end) return txDate <= end;
+  const matchesSearch =
+    searchTerm === '' ||
+    tx.description.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    tx.reference_no.toLowerCase().includes(searchTerm.toLowerCase());
 
-    return true;
+  const matchesType =
+    selectedType === 'All' || tx.type.toLowerCase() === selectedType.toLowerCase();
+
+  return matchesDate && matchesSearch && matchesType;
+
   });
 
   const totalDebit = filteredTransactions.reduce((sum, tx) => sum + tx.debit, 0);
   const totalCredit = filteredTransactions.reduce((sum, tx) => sum + tx.credit, 0);
+  
+
 
   return (
     <DashboardLayout>
@@ -104,6 +118,31 @@ const TransactionTable: React.FC = () => {
                     onChange={(e) => setEndDate(e.target.value)}
                   />
                 </div>
+                  <div className="col-md-3">
+                    <label className="form-label">Search</label>
+                    <input
+                      type="text"
+                      className="form-control"
+                      placeholder="Name, Ref. No, Contact, etc."
+                      value={searchTerm}
+                      onChange={(e) => setSearchTerm(e.target.value)}
+                    />
+                  </div>
+                  <div className="col-md-3">
+                    <label className="form-label">Transaction Type</label>
+                    <select
+                      className="form-select"
+                      value={selectedType}
+                      onChange={(e) => setSelectedType(e.target.value)}
+                    >
+                      <option value="All">All</option>
+                      <option value="Transfer">Transfer</option>
+                      <option value="Payment">Payment</option>
+                      <option value="GGives">GGives</option>
+                      <option value="Refund">Refund</option>
+                      <option value="Other">Other</option>
+                    </select>
+                  </div>
               </div>
 
               {loading ? (

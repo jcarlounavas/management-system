@@ -16,7 +16,10 @@ const Summary: React.FC = () => {
     fetch('http://localhost:3001/summary/transactions')
       .then((res) => res.json())
       .then((data) => {
-        setSummaries(data.summaries || []);
+        console.log('Fetched data:', data);
+
+        setSummaries(Array.isArray(data) ? data : data.summaries || []);
+
       })
       .catch((err) => console.error('Fetch error:', err));
   }, []);

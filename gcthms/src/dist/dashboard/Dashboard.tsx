@@ -71,7 +71,7 @@ fetch('http://localhost:3001/api/summary/count')
               <div className="row align-items-center">
                 <div className="col-md-6">
                   <div className="page-header-title">
-                    <h5 className="m-b-10">Dashboard</h5>
+                    <h5 className="m-b-10 badge bg-brand-color-2 text-white f-50 mt-4 ms-2 px-3 py-2">Dashboard</h5>
                   </div>
                 </div>
               </div>
@@ -80,7 +80,7 @@ fetch('http://localhost:3001/api/summary/count')
 
           {/* Example Cards */}
           <div className="mb-4">
-          <label htmlFor="summarySelect" className="form-label">Select Summary:</label>
+          <label htmlFor="summarySelect" className="form-label badge bg-brand-color-2 text-white f-16 mt-4 ms-2 px-3 py-2">Select Summary:</label>
           <select
             id="summarySelect"
             className="form-select"
@@ -98,16 +98,16 @@ fetch('http://localhost:3001/api/summary/count')
         {/* Totals */}
         <div className="row">
           <div className="col-md-4 col-xl-4">
-            <Card title="Total Debit" body={`₱${totals.total_debit.toLocaleString()}`} />
+            <Card title="Total Debit" body={`₱${totals.total_debit.toLocaleString()}`} color="#76d0edff"  />
           </div>
           <div className="col-md-4 col-xl-4">
-            <Card title="Total Credit" body={`₱${totals.total_credit.toLocaleString()}`} />
+            <Card title="Total Credit" body={`₱${totals.total_credit.toLocaleString()}`} color="#76d0edff" />
           </div>
           <div className="col-md-4 col-xl-4">
-            <Card title="Total Transactions" body={`${totalTransactions}`} />
+            <Card title="Total Transactions" body={`${totalTransactions}`} color="#76d0edff" />
         </div>
          <div className="col-md-4 col-xl-4">
-            <Card title="File Uploaded" body={`${totalSummaries}`} />
+            <Card title="File Uploaded" body={`${totalSummaries}`} color="#76d0edff" />
         </div>
       </div>
       </div>
