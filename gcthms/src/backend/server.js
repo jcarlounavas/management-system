@@ -1,35 +1,98 @@
+// src/backend/server.js
 const express = require('express');
 const cors = require('cors');
-const db = require('./db'); // Your pool is defined here
+const bcrypt = require('bcryptjs');
+const db = require('./db');
+
 const app = express();
 const PORT = 3001;
 
 app.use(cors());
 app.use(express.json());
 
-// POST: Insert Summary
+app.use(cors({
+  origin: 'http://localhost:3000',
+  credentials: true,
+}));
+
+app.use(express.json());
+
+// ✅ Register route
+app.post('/api/register', async (req, res) => {
+  const { firstname, lastname, email, password, contact_number } = req.body;
+
+  try {
+    const [existing] = await db.query(
+      'SELECT * FROM users WHERE email = ? OR contact_number = ?',
+      [email, contact_number]
+    );
+    if (existing.length > 0) {
+      return res.status(400).json({ error: 'Email or contact number already registered' });
+    }
+
+    const hashedPassword = await bcrypt.hash(password, 10);
+
+    await db.query(
+      'INSERT INTO users (firstname, lastname, email, contact_number, password) VALUES (?, ?, ?, ?, ?)',
+      [firstname, lastname, email, contact_number, hashedPassword]
+    );
+
+    res.status(201).json({ message: 'Registration successful' });
+  } catch (err) {
+    console.error('Register Error:', err);
+    res.status(500).json({ error: 'Database error' });
+  }
+});
+
+app.listen(PORT, () => {
+  console.log(`✅ Server running at http://localhost:${PORT}`);
+});
+    
+// ✅ Login endpoint
+app.post('/api/login', async (req, res) => {
+  const { email, password } = req.body;
+
+  try {
+    const [users] = await db.query('SELECT * FROM users WHERE email = ?', [email]);
+
+    if (users.length === 0) {
+      return res.status(401).json({ error: 'Invalid email or password' });
+    }
+
+    const user = users[0];
+    const isMatch = await bcrypt.compare(password, user.password);
+    if (!isMatch) {
+      return res.status(401).json({ error: 'Invalid email or password' });
+    }
+
+    res.json({
+      id: user.id,
+      firstname: user.firstname,
+      lastname: user.lastname,
+      email: user.email,
+      contact_number: user.contact_number,
+    });
+  } catch (err) {
+    console.error('Login Error:', err);
+    res.status(500).json({ error: 'Database error' });
+  }
+});
+
+// ✅ Upload Summary + Transactions
 app.post('/api/summary', async (req, res) => {
-  const {
-    fileName,
-    numberOfTransactions,
-    transactions = [],
-  } = req.body;
+  const { fileName, numberOfTransactions, transactions = [] } = req.body;
 
   if (!fileName || numberOfTransactions == null) {
     return res.status(400).json({ error: "Missing required summary fields" });
   }
 
   try {
-    // STEP 1: Insert into summary
     const [result] = await db.query(
-      `INSERT INTO summary (file_name, total_transaction)
-       VALUES (?, ?)`,
+      `INSERT INTO summary (file_name, total_transaction) VALUES (?, ?)`,
       [fileName, numberOfTransactions]
     );
-
     const summaryId = result.insertId;
 
-    // STEP 2: Filter valid transactions and log skipped ones
     const validTransactions = [];
     const skippedTransactions = [];
 
@@ -43,17 +106,14 @@ app.post('/api/summary', async (req, res) => {
 
     if (skippedTransactions.length > 0) {
       console.warn("Skipped invalid transactions:", skippedTransactions.length);
-      console.table(
-        skippedTransactions.map(({ index, tx }) => ({
-          index,
-          tx_date: tx.tx_date,
-          description: tx.description,
-          reference_no: tx.reference_no,
-        }))
-      );
+      console.table(skippedTransactions.map(({ index, tx }) => ({
+        index,
+        tx_date: tx.tx_date,
+        description: tx.description,
+        reference_no: tx.reference_no,
+      })));
     }
 
-    // STEP 3: Insert valid transactions
     if (validTransactions.length > 0) {
       const values = validTransactions.map((tx) => [
         tx.tx_date,
@@ -78,19 +138,18 @@ app.post('/api/summary', async (req, res) => {
 
     res.status(201).json({
       summaryId,
-      message: "Summary and any valid transactions saved.",
+      message: "Summary and valid transactions saved.",
       inserted: validTransactions.length,
       skipped: skippedTransactions.length,
     });
+
   } catch (err) {
     console.error("Insert error:", err);
     res.status(500).json({ error: "Failed to save summary and transactions" });
   }
 });
 
-
-
-// GET: All Transactions (optional date filtering)
+// ✅ All transactions (with optional date filter)
 app.get('/api/transactions', async (req, res) => {
   const { startDate, endDate } = req.query;
   try {
@@ -110,8 +169,8 @@ app.get('/api/transactions', async (req, res) => {
   }
 });
 
-//GET Summary
-app.get('/summary/transactions', async (req, res) => {
+// ✅ Summary overview
+app.get('/api/summaries', async (req, res) => {
   try {
     const [summaries] = await db.query(`
       SELECT 
@@ -125,17 +184,14 @@ app.get('/summary/transactions', async (req, res) => {
       GROUP BY s.id
       ORDER BY s.id DESC
     `);
-
-    res.json({ summaries }); // renamed from { summary } to { summaries }
-
+    res.json({ summaries });
   } catch (err) {
-    console.error('Error fetching summary:', err);
+    console.error('Error fetching summaries:', err);
     res.status(500).json({ error: 'Internal server error' });
   }
 });
 
-
-
+// ✅ Totals by summary ID
 app.get('/api/summary/:id/totals', async (req, res) => {
   const summaryId = req.params.id;
 
@@ -156,38 +212,61 @@ app.get('/api/summary/:id/totals', async (req, res) => {
     const totals = rows[0] || { total_debit: 0, total_credit: 0 };
     res.json(totals);
   } catch (err) {
-    console.error('Error fetching totals by summary ID:', err);
-    res.status(500).json({ error: 'Failed to fetch totals by summary ID' });
+    console.error('Error fetching totals:', err);
+    res.status(500).json({ error: 'Failed to fetch totals' });
   }
 });
 
+// ✅ Summary list
 app.get('/api/summary', async (req, res) => {
   try {
     const [summaries] = await db.query(`SELECT id, file_name FROM summary ORDER BY id DESC`);
     res.json(summaries);
   } catch (err) {
-    console.error('Error fetching summaries:', err);
+    console.error('Error fetching summary list:', err);
     res.status(500).json({ error: 'Failed to fetch summaries' });
   }
 });
 
+// ✅ Count summaries
 app.get('/api/summary/count', async (req, res) => {
   try {
     const [rows] = await db.query('SELECT COUNT(*) AS total_summaries FROM summary');
-    res.json(rows[0]);  // returns { total_summaries: N }
+    res.json(rows[0]);
   } catch (err) {
     console.error('Error fetching summary count:', err);
     res.status(500).json({ error: 'Failed to fetch summary count' });
   }
 });
 
+// ✅ Count transactions
+app.get('/api/transactions/count', async (req, res) => {
+  try {
+    const [rows] = await db.query('SELECT COUNT(*) AS total_transactions FROM transactions');
+    res.json(rows[0]);
+  } catch (err) {
+    console.error('Error fetching transaction count:', err);
+    res.status(500).json({ error: 'Failed to fetch transaction count' });
+  }
+});
 
+// ✅ All individual transactions
+app.get('/api/individuals', async (req, res) => {
+  try {
+    const [transactions] = await db.query('SELECT * FROM transactions');
+    res.json(transactions);
+  } catch (err) {
+    console.error("❌ MySQL select error:", err);
+    res.status(500).json({ error: 'Failed to fetch transactions' });
+  }
+});
 
+// ✅ 404 Fallback
+app.use((req, res) => {
+  res.status(404).json({ error: 'Endpoint not found' });
+});
 
-
-
-
-// Start Server
+// ✅ Start Server
 app.listen(PORT, () => {
-  console.log(` Server running on http://localhost:${PORT}`);
+  console.log(`✅ Server running at http://localhost:${PORT}`);
 });

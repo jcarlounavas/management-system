@@ -1,8 +1,7 @@
 
 import './App.css';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
-import Login from './forms/Login';
-import Register from './forms/Register';
+import AuthForm from './forms/AuthForm';
 import Dashboard from './dist/dashboard/Dashboard';
 import UploadPage from './components/UploadPage';
 import DisplayInditranc from './components/TransactionTable'
@@ -12,24 +11,18 @@ import DisplaySummary from './components/Summary';
 import './dist/assets/css/style.css';
 
 
-
-
-
-
-
-export default function App() {
+const App: React.FC = () => {
   return (
     <Router>
       <Routes>
-        <Route path="/" element={<Login />} />
-        <Route path="/register" element={<Register />} />
+        <Route path="/" element={<AuthForm mode="login" />} />
+        <Route path="/register" element={<AuthForm mode="register" />} />
         <Route path="/dashboard" element={<Dashboard />} />
         <Route path="/upload" element={<UploadPage />} />
         <Route path="/individual" element={<DisplayInditranc />} />
-        <Route path="/contacts" element={<Contacts />} />
-        <Route path="/summary" element={<DisplaySummary />} />
-
       </Routes>
     </Router>
   );
-}
+};
+
+export default App;
