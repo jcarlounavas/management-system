@@ -29,45 +29,44 @@ app.post('/api/summary', async (req, res) => {
 
     const summaryId = result.insertId;
 
-    // STEP 2: Filter valid transactions and log skipped ones
-    const validTransactions = [];
-    const skippedTransactions = [];
+    // STEP 2: Check for existing reference numbers
+    const referenceNos = transactions.map(tx => tx.reference_no).filter(Boolean);
+    let existingReferences = [];
 
-    transactions.forEach((tx, index) => {
-      if (tx.tx_date && tx.description && tx.reference_no) {
-        validTransactions.push(tx);
+    if (referenceNos.length > 0) {
+      const [existing] = await db.query(
+        `SELECT reference_no FROM transactions 
+         WHERE reference_no IN (?)`,
+        [referenceNos]
+      );
+      existingReferences = existing.map(row => row.reference_no);
+    }
+
+    // STEP 3: Prepare transactions (skip duplicates)
+    const values = [];
+    const skippedDuplicates = [];
+
+    transactions.forEach(tx => {
+      if (tx.reference_no && existingReferences.includes(tx.reference_no)) {
+        skippedDuplicates.push(tx.reference_no);
       } else {
-        skippedTransactions.push({ index, tx });
+        values.push([
+          tx.tx_date || null,
+          tx.description || null,
+          tx.reference_no || null,
+          tx.debit ?? 0,
+          tx.credit ?? 0,
+          tx.balance ?? 0,
+          tx.type || '',
+          tx.sender || '',
+          tx.receiver || '',
+          summaryId
+        ]);
       }
     });
 
-    if (skippedTransactions.length > 0) {
-      console.warn("Skipped invalid transactions:", skippedTransactions.length);
-      console.table(
-        skippedTransactions.map(({ index, tx }) => ({
-          index,
-          tx_date: tx.tx_date,
-          description: tx.description,
-          reference_no: tx.reference_no,
-        }))
-      );
-    }
-
-    // STEP 3: Insert valid transactions
-    if (validTransactions.length > 0) {
-      const values = validTransactions.map((tx) => [
-        tx.tx_date,
-        tx.description,
-        tx.reference_no,
-        tx.debit ?? 0,
-        tx.credit ?? 0,
-        tx.balance ?? 0,
-        tx.type ?? '',
-        tx.sender ?? '',
-        tx.receiver ?? '',
-        summaryId,
-      ]);
-
+    // STEP 4: Insert non-duplicate transactions
+    if (values.length > 0) {
       await db.query(
         `INSERT INTO transactions
          (tx_date, description, reference_no, debit, credit, balance, type, sender, receiver, summary_id)
@@ -78,13 +77,15 @@ app.post('/api/summary', async (req, res) => {
 
     res.status(201).json({
       summaryId,
-      message: "Summary and any valid transactions saved.",
-      inserted: validTransactions.length,
-      skipped: skippedTransactions.length,
+      message: "Data saved with duplicate reference checking",
+      inserted: values.length,
+      skippedDuplicates: skippedDuplicates.length,
+      duplicateReferences: skippedDuplicates
     });
+
   } catch (err) {
     console.error("Insert error:", err);
-    res.status(500).json({ error: "Failed to save summary and transactions" });
+    res.status(500).json({ error: "Failed to save data" });
   }
 });
 
