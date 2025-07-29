@@ -99,16 +99,16 @@ fetch('http://localhost:3001/api/summary/count')
         {/* Totals */}
         <div className="row">
           <div className="col-md-4 col-xl-4">
-            <Card title="Total Debit" body={`₱${totals.total_debit.toLocaleString()}`} color="#76d0edff"  />
+            <Card title="Total Debit" body={`₱${totals.total_debit.toLocaleString()}`} color="#3f4d67"  />
           </div>
           <div className="col-md-4 col-xl-4">
-            <Card title="Total Credit" body={`₱${totals.total_credit.toLocaleString()}`} color="#76d0edff" />
+            <Card title="Total Credit" body={`₱${totals.total_credit.toLocaleString()}`} color="#3f4d67" />
           </div>
           <div className="col-md-4 col-xl-4">
-            <Card title="Total Transactions" body={`${totalTransactions}`} color="#76d0edff" />
+            <Card title="Total Transactions" body={`${totalTransactions}`} color="#3f4d67" />
         </div>
          <div className="col-md-4 col-xl-4">
-            <Card title="File Uploaded" body={`${totalSummaries}`} color="#76d0edff" />
+            <Card title="File Uploaded" body={`${totalSummaries}`} color="#3f4d67" />
         </div>
       </div>
       </div>

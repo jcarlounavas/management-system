@@ -1,0 +1,37 @@
+@import 'https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css';
+
+.login-card {
+  max-width: 400px;
+  margin: auto;
+  animation-duration: 0.7s;
+  animation-timing-function: ease-out;
+}
+
+body, html {
+  height: 100%;
+  margin: 0;
+  padding: 0;
+  overflow: hidden;
+}
+
+.auth-main {
+  height: 100vh;
+  width: 100vw;
+  background: linear-gradient(-45deg, #e0eafc, #a2c2e0, #5d6e8c, #3f4d67);
+  background-size: 400% 400%;
+  animation: gradient 8s ease infinite;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+/* Optional: remove inner gradients if using Bootstrap */
+.auth-main > * {
+  background: none !important;
+}
+
+@keyframes gradient {
+  0% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
+}

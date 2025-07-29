@@ -21721,7 +21721,11 @@ select.form-control[data-multiselectsplitter-firstselect-selector], select.form-
 ==========================  **/
 .auth-main {
   position: relative;
-  background-size: cover;
+  position: relative;
+  background: linear-gradient(-45deg, #e0eafc, #a2c2e0, #5d6e8c, #3f4d67);
+  background-size: 400% 400%;
+  animation: gradient 15s ease infinite;
+  background-position: 0% 50%;
 }
 .auth-main .auth-wrapper {
   height: 100%;
@@ -21910,11 +21914,14 @@ select.form-control[data-multiselectsplitter-firstselect-selector], select.form-
 }
 
 @keyframes floating {
-  from {
-    transform: rotate(0deg) translate(-10px) rotate(0deg);
+   0% {
+    background-position: 0% 50%;
   }
-  to {
-    transform: rotate(360deg) translate(-10px) rotate(-360deg);
+  50% {
+    background-position: 100% 50%;
+  }
+  100% {
+    background-position: 0% 50%;
   }
 }
 /**====== Authentication css end ======**/

@@ -21,16 +21,11 @@ const Register: React.FC = () => {
       <div className="auth-wrapper v1">
         <div className="auth-form">
           <div className="position-relative">
-            <div className="auth-bg">
-              <span className="r"></span>
-              <span className="r s"></span>
-              <span className="r s"></span>
-              <span className="r"></span>
-            </div>
-            <div className="card mb-0">
+
+            <div className="card login-card animate__animated animate__fadeInDown shadow rounded-4 card mb-0">
               <div className="card-body">
                 <div className="text-center">
-                  <a href="#">
+                  <a href="/dashboard">
                     <img src="/assets/images/logo-dark.svg" alt="logo" />
                   </a>
                 </div>
