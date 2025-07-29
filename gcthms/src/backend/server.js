@@ -112,28 +112,91 @@ app.get('/api/transactions', async (req, res) => {
 });
 
 //GET Summary
-app.get('/summary/transactions', async (req, res) => {
+// app.get('/api/summary/all', async (req, res) => {
+//   try {
+//     const [pairSummaries] = await db.query(
+//       `SELECT 
+//          CONCAT(sender, ' → ', receiver) AS pair,
+//          COUNT(*) AS count,
+//          SUM(debit) AS totalDebit,
+//          SUM(credit) AS totalCredit
+//        FROM transactions
+//        GROUP BY sender, receiver
+//        ORDER BY count DESC`
+//     );
+
+//     const [totals] = await db.query(
+//       `SELECT 
+//          COUNT(*) AS totalTransactions,
+//          SUM(debit) AS totalDebit,
+//          SUM(credit) AS totalCredit
+//        FROM transactions`
+//     );
+
+//     res.json({
+//       pairSummaries,
+//       totalDebit: totals[0].totalDebit || 0,
+//       totalCredit: totals[0].totalCredit || 0,
+//       transactions: Array(totals[0].totalTransactions || 0).fill(0)
+//     });
+//   } catch (error) {
+//     console.error('Error fetching all summaries:', error);
+//     res.status(500).json({ error: 'Failed to fetch all summary transactions' });
+//   }
+// });
+app.get('/api/summary/grouped', async (req, res) => {
   try {
     const [summaries] = await db.query(`
-      SELECT 
-        s.id AS summary_id,
-        s.created_at,
-        COUNT(t.id) AS transaction_count,
-        IFNULL(SUM(t.debit), 0) AS totalDebit,
-        IFNULL(SUM(t.credit), 0) AS totalCredit
-      FROM summary s
-      LEFT JOIN transactions t ON t.summary_id = s.id
-      GROUP BY s.id
-      ORDER BY s.id DESC
+      SELECT id AS summary_id, created_at, file_name
+      FROM summary
+      ORDER BY created_at DESC
     `);
 
-    res.json({ summaries }); // renamed from { summary } to { summaries }
+    const groupedSummaries = [];
 
-  } catch (err) {
-    console.error('Error fetching summary:', err);
-    res.status(500).json({ error: 'Internal server error' });
+    for (const summary of summaries) {
+      const [pairSummaries] = await db.query(
+        `SELECT 
+           CONCAT(sender, ' → ', receiver) AS pair,
+           COUNT(*) AS count,
+           SUM(debit) AS totalDebit,
+           SUM(credit) AS totalCredit
+         FROM transactions
+         WHERE summary_id = ?
+         GROUP BY sender, receiver
+         ORDER BY count DESC`,
+        [summary.summary_id]
+      );
+
+      const [totals] = await db.query(
+        `SELECT 
+           COUNT(*) AS totalTransactions,
+           SUM(debit) AS totalDebit,
+           SUM(credit) AS totalCredit
+         FROM transactions
+         WHERE summary_id = ?`,
+        [summary.summary_id]
+      );
+
+      groupedSummaries.push({
+        summary_id: summary.summary_id,
+        created_at: summary.created_at,
+        file_name: summary.file_name,
+        pairSummaries,
+        totalDebit: totals[0].totalDebit || 0,
+        totalCredit: totals[0].totalCredit || 0,
+        totalTransactions: totals[0].totalTransactions || 0
+      });
+    }
+
+    res.json(groupedSummaries);
+  } catch (error) {
+    console.error('Error fetching grouped summaries:', error);
+    res.status(500).json({ error: 'Failed to fetch grouped summary transactions' });
   }
 });
+
+
 
 
 
