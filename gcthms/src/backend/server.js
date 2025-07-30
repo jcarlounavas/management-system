@@ -262,21 +262,21 @@ app.get('/api/summary/:id/details', async (req, res) => {
 
     const summary = summaries[0];
 
-    // Get pair summaries
-    const [pairSummaries] = await db.query(
+    // Group transactions by description (instead of sender → receiver)
+    const [descriptionSummaries] = await db.query(
       `SELECT 
-         CONCAT(sender, ' → ', receiver) AS pair,
+         description,
          COUNT(*) AS count,
          SUM(debit) AS totalDebit,
          SUM(credit) AS totalCredit
        FROM transactions
        WHERE summary_id = ?
-       GROUP BY sender, receiver
+       GROUP BY description
        ORDER BY count DESC`,
       [summaryId]
     );
 
-    // Get total transactions, total debit/credit
+    // Get total transaction counts and amounts
     const [totals] = await db.query(
       `SELECT 
          COUNT(*) AS totalTransactions,
@@ -291,7 +291,7 @@ app.get('/api/summary/:id/details', async (req, res) => {
       summary_id: summary.summary_id,
       created_at: summary.created_at,
       file_name: summary.file_name,
-      pairSummaries,
+      descriptionSummaries, // 👈 replaces pairSummaries
       totalDebit: totals[0].totalDebit || 0,
       totalCredit: totals[0].totalCredit || 0,
       totalTransactions: totals[0].totalTransactions || 0,
@@ -301,6 +301,7 @@ app.get('/api/summary/:id/details', async (req, res) => {
     res.status(500).json({ error: 'Failed to fetch summary details' });
   }
 });
+
 
 
 

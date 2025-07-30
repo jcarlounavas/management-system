@@ -2,8 +2,8 @@ import React, { useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import DashboardLayout from '../dist/dashboard/DashboardLayout';
 
-interface PairSummary {
-  pair: string;
+interface DescriptionSummary {
+  description: string;
   count: number;
   totalDebit: number;
   totalCredit: number;
@@ -13,11 +13,12 @@ interface GroupedSummary {
   summary_id: number;
   created_at: string;
   file_name: string;
-  pairSummaries: PairSummary[];
+  descriptionSummaries: DescriptionSummary[];
   totalDebit: number;
   totalCredit: number;
   totalTransactions: number;
 }
+
 
 const ViewPage: React.FC = () => {
   const { id } = useParams(); // from route like /summary/:id
@@ -70,17 +71,17 @@ const ViewPage: React.FC = () => {
                 <thead>
                   <tr>
                     <th>#</th>
-                    <th>Sender → Receiver</th>
+                    <th>Description</th>
                     <th>Number of Transactions</th>
                     <th>Total Debit</th>
                     <th>Total Credit</th>
                   </tr>
                 </thead>
                 <tbody>
-                  {summary.pairSummaries.map((item, index) => (
+                  {summary.descriptionSummaries.map((item, index) => (
                     <tr key={index}>
                       <td>{index + 1}</td>
-                      <td>{item.pair}</td>
+                      <td>{item.description}</td>
                       <td>{item.count}</td>
                       <td className="text-end">{item.totalDebit.toLocaleString()}</td>
                       <td className="text-end">{item.totalCredit.toLocaleString()}</td>
