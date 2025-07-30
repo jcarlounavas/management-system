@@ -43,9 +43,10 @@ const [totalSummaries, setTotalSummaries] = useState(0);
         .then((res) => res.json())
         .then((data) => setTotalTransactions(data.length));
 
-fetch('http://localhost:3001/summary/transactions')
+fetch('http://localhost:3001/summary/count')
     .then((res) => res.json())
-    .then((data) => setTotalSummaries(data.total_summaries || 0));
+    .then((data) => setTotalSummaries(data.total_transactions || 0))
+    .catch((err) => console.error('Error fetching summary count:', err));
   }, [summaryId]);
 
 

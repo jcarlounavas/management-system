@@ -76,7 +76,7 @@ const Summary: React.FC = () => {
                     </h3>
                     <div style={{ maxHeight: '400px', overflowY: 'auto' }}>
                     <table className="table table-bordered table-striped">
-                      <thead>
+                      <thead className='table-primary'>
                         <tr>
                           <th>#</th>
                           <th>Sender → Receiver</th>

@@ -1,5 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import DashboardLayout from '../dist/dashboard/DashboardLayout';
+import jsPDF from 'jspdf';
+import autoTable from 'jspdf-autotable';
 
 interface Transaction {
   tx_date: string;
@@ -19,6 +21,7 @@ const TransactionTable: React.FC = () => {
   const [endDate, setEndDate] = useState<string>('');
   const [searchTerm, setSearchTerm] = useState<string>('');
   const [selectedType, setSelectedType] = useState<string>('All');
+  const [searchCategory, setSearchCategory] = useState<string>('All');
   const formatDate = (dateStr: string) => {
   const date = new Date(dateStr);
   const day = String(date.getDate()).padStart(2, '0');
@@ -41,6 +44,7 @@ const TransactionTable: React.FC = () => {
       })
       .catch((err) => console.error('Error fetching transactions:', err))
       .finally(() => setLoading(false));
+      
   }, []);
 
   // Filtered transactions by date range
@@ -56,11 +60,26 @@ const TransactionTable: React.FC = () => {
     (start && !end && txDate >= start) ||
     (!start && end && txDate <= end);
 
-  const matchesSearch =
-    searchTerm === '' ||
-    tx.description.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    tx.reference_no.toLowerCase().includes(searchTerm.toLowerCase());
+  const matchesSearch = (() => {
+    if (searchTerm === '') return true;
 
+  const term = searchTerm.toLowerCase();
+  switch (searchCategory) {
+    case 'Sender':
+      return tx.sender.toLowerCase().includes(term);
+    case 'Receiver':
+      return tx.receiver.toLowerCase().includes(term);
+    case 'Reference':
+      return tx.reference_no.toLowerCase().includes(term);
+    case 'All':
+    default:
+      return (
+        tx.sender.toLowerCase().includes(term) ||
+        tx.receiver.toLowerCase().includes(term) ||
+        tx.reference_no.toLowerCase().includes(term)
+      );
+}
+  })();
   const matchesType =
     selectedType === 'All' || tx.type.toLowerCase() === selectedType.toLowerCase();
 
@@ -72,14 +91,82 @@ const TransactionTable: React.FC = () => {
   const totalCredit = filteredTransactions.reduce((sum, tx) => sum + tx.credit, 0);
   
 
+  const handleExportPDF = () => {
+  const fileName = prompt("Enter a file name for the PDF:", "Filtered_Transactions");
+
+  if (!fileName) return;
+
+  const doc = new jsPDF();
+
+  const tableColumn = ['Date', 'Reference No', 'Description', 'Type', 'Sender', 'Receiver', 'Debit', 'Credit'];
+
+  const tableRows = filteredTransactions.map(tx => [
+    formatDate(tx.tx_date),
+    tx.reference_no,
+    tx.description,
+    tx.type,
+    tx.sender,
+    tx.receiver,
+    tx.debit.toFixed(2),
+    tx.credit.toFixed(2),
+  ]);
+
+  // Add totals row
+  tableRows.push([
+    'TOTAL',
+    '', '', '', '', '',
+    totalDebit.toFixed(2),
+    totalCredit.toFixed(2),
+  ]);
+
+  doc.text('Filtered Transactions Report', 14, 15);
+  autoTable(doc, {
+  head: [tableColumn],
+  body: tableRows,
+  startY: 20,
+  theme: 'grid', // 🟩 grid = full border like Bootstrap "bordered"
+  headStyles: {
+    fillColor: [52, 58, 64], // 🟦 dark header (like Bootstrap dark table)
+    textColor: 255,
+    fontStyle: 'bold',
+    halign: 'center',
+    valign: 'middle'
+  },
+  bodyStyles: {
+    fontSize: 6,
+    cellPadding: 4,
+    valign: 'middle'
+  },
+  alternateRowStyles: {
+    fillColor: [248, 249, 250] // ⬜ light gray like Bootstrap striped
+  },
+  columnStyles: {
+    5: { halign: 'right' }, // Debit
+    6: { halign: 'right' }, // Credit
+  },
+  didDrawCell: (data) => {
+    if (data.row.index === tableRows.length - 1) {
+      // 🔸 Total row
+      data.cell.styles.fontStyle = 'bold';
+      data.cell.styles.fillColor = [233, 236, 239]; // Slightly different to stand out
+    }
+  }
+});
+
+  doc.save(`${fileName}.pdf`);
+};
+
+
 
   return (
     <DashboardLayout>
       <div
+        
         data-pc-preset="preset-1"
         data-pc-sidebar-caption="false"
         data-pc-direction="ltr"
         data-pc-theme="light"
+        
       >
         <div className="loader-bg">
             <div className="loader-track">
@@ -118,17 +205,8 @@ const TransactionTable: React.FC = () => {
                     onChange={(e) => setEndDate(e.target.value)}
                   />
                 </div>
-                  <div className="col-md-3">
-                    <label className="form-label">Search</label>
-                    <input
-                      type="text"
-                      className="form-control"
-                      placeholder="Name, Ref. No, Contact, etc."
-                      value={searchTerm}
-                      onChange={(e) => setSearchTerm(e.target.value)}
-                    />
-                  </div>
-                  <div className="col-md-3">
+
+                <div className="col-md-3">
                     <label className="form-label">Transaction Type</label>
                     <select
                       className="form-select"
@@ -143,6 +221,35 @@ const TransactionTable: React.FC = () => {
                       <option value="Other">Other</option>
                     </select>
                   </div>
+                  <div className="col-md-3">
+                  <label className="form-label">Search By</label>
+                  <select
+                    className="form-select mb-2"
+                    value={searchCategory}
+                    onChange={(e) => setSearchCategory(e.target.value)}
+                  >
+                    <option value="All">All</option>
+                    <option value="Sender">Sender</option>
+                    <option value="Receiver">Receiver</option>
+                    <option value="Reference">Reference No</option>
+                  </select>
+
+                  <input
+                    type="text"
+                    className="form-control"
+                    placeholder={`Search ${searchCategory}`}
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                  />
+
+                  
+                </div>
+                <div className="mb-3 text-end">
+                <button className="btn btn-outline-primary" onClick={handleExportPDF}>
+                  Export to PDF
+                </button>
+              </div>
+                  
               </div>
 
               {loading ? (

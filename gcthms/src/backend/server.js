@@ -245,9 +245,25 @@ app.get('/api/summary/count', async (req, res) => {
   }
 });
 
+// GET: Transactions by Summary ID
+app.get('/api/summary/:id/transactions', async (req, res) => {
+  const summaryId = req.params.id;
 
+  if (!summaryId) {
+    return res.status(400).json({ error: 'Missing summary ID' });
+  }
 
-
+  try {
+    const [rows] = await db.query(
+      `SELECT * FROM transactions WHERE summary_id = ?`,
+      [summaryId]
+    );
+    res.json(rows);
+  } catch (err) {
+    console.error('Error fetching transactions by summary ID:', err);
+    res.status(500).json({ error: 'Failed to fetch transactions' });
+  }
+});
 
 
 
