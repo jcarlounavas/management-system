@@ -72,7 +72,7 @@ fetch('http://localhost:3001/summary/transactions')
               <div className="row align-items-center">
                 <div className="col-md-6">
                   <div className="page-header-title">
-                    <h5 className="m-b-10 badge bg-brand-color-2 text-white f-50 mt-4 ms-2 px-3 py-2">Dashboard</h5>
+                    <h5 className="m-b-10 badge bg-brand-color-3 text-white f-50 mt-4 ms-2 px-3 py-2">Dashboard</h5>
                   </div>
                 </div>
               </div>
@@ -81,7 +81,7 @@ fetch('http://localhost:3001/summary/transactions')
 
           {/* Example Cards */}
           <div className="mb-4">
-          <label htmlFor="summarySelect" className="form-label badge bg-brand-color-2 text-white f-16 mt-4 ms-2 px-3 py-2">Select Summary:</label>
+          <label htmlFor="summarySelect" className="form-label badge bg-brand-color-3 text-white f-16 mt-4 ms-2 px-3 py-2">Select Summary:</label>
           <select
             id="summarySelect"
             className="form-select"
@@ -99,16 +99,16 @@ fetch('http://localhost:3001/summary/transactions')
         {/* Totals */}
         <div className="row">
           <div className="col-md-4 col-xl-4">
-            <Card title="Total Debit" body={`₱${totals.total_debit.toLocaleString()}`} color="#3f4d67"  />
+            <Card title="Total Debit" body={`₱${totals.total_debit.toLocaleString()}`} color="#007bffc9"  />
           </div>
           <div className="col-md-4 col-xl-4">
-            <Card title="Total Credit" body={`₱${totals.total_credit.toLocaleString()}`} color="#3f4d67" />
+            <Card title="Total Credit" body={`₱${totals.total_credit.toLocaleString()}`} color="#007bffc9" />
           </div>
           <div className="col-md-4 col-xl-4">
-            <Card title="Total Transactions" body={`${totalTransactions}`} color="#3f4d67" />
+            <Card title="Total Transactions" body={`${totalTransactions}`} color="#007bffc9" />
         </div>
          <div className="col-md-4 col-xl-4">
-            <Card title="File Uploaded" body={`${totalSummaries}`} color="#3f4d67" />
+            <Card title="File Uploaded" body={`${totalSummaries}`} color="#007bffc9" />
         </div>
       </div>
       </div>
