@@ -74,7 +74,8 @@ const Summary: React.FC = () => {
                       {new Date(summary.created_at).toLocaleString()}
                       <span className='text-muted'> {' '}|| File: {summary.file_name}</span>
                     </h3>
-                    <table className="table-responsive" style={{ maxHeight: '400px', overflowY: 'auto' }}>
+                    <div style={{ maxHeight: '400px', overflowY: 'auto' }}>
+                    <table className="table table-bordered table-striped">
                       <thead>
                         <tr>
                           <th>#</th>
@@ -102,6 +103,7 @@ const Summary: React.FC = () => {
                         </tr>
                       </tbody>
                     </table>
+                  </div>
                   </div>
                 ))
               )}

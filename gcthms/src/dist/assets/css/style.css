@@ -16323,6 +16323,14 @@ pre[class*=language-] > code {
   .pc-sidebar ~ .pc-header {
     transition: left 0.2s ease;
   }
+  .pc-container {
+  position: relative;
+  top: 74px;
+  margin-left: 20px;
+  min-height: calc(100vh - 140px); /* allows page to extend and scroll */
+  overflow-x: hidden;
+  overflow-y: auto;
+}
   .pc-sidebar ~ .pc-footer,
   .pc-sidebar ~ .pc-container {
     transition: margin-left 0.2s ease;
