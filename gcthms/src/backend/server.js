@@ -20,7 +20,7 @@ app.post('/api/summary', async (req, res) => {
   }
 
   try {
-    // STEP 1: Insert into summary
+    // Insert into summary
     const [result] = await db.query(
       `INSERT INTO summary (file_name, total_transaction)
        VALUES (?, ?)`,
@@ -29,7 +29,7 @@ app.post('/api/summary', async (req, res) => {
 
     const summaryId = result.insertId;
 
-    // STEP 2: Check for existing reference numbers
+    // Check for existing reference numbers
     const referenceNos = transactions.map(tx => tx.reference_no).filter(Boolean);
     let existingReferences = [];
 
@@ -42,7 +42,7 @@ app.post('/api/summary', async (req, res) => {
       existingReferences = existing.map(row => row.reference_no);
     }
 
-    // STEP 3: Prepare transactions (skip duplicates)
+    // Prepare transactions (skip duplicates)
     const values = [];
     const skippedDuplicates = [];
 
@@ -65,7 +65,7 @@ app.post('/api/summary', async (req, res) => {
       }
     });
 
-    // STEP 4: Insert non-duplicate transactions
+    // Insert non-duplicate transactions
     if (values.length > 0) {
       await db.query(
         `INSERT INTO transactions
