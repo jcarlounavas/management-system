@@ -74,7 +74,7 @@ const Summary: React.FC = () => {
                       {new Date(summary.created_at).toLocaleString()}
                       <span className='text-muted'> {' '}|| File: {summary.file_name}</span>
                     </h3>
-                    <table className="data-table">
+                    <table className="table-responsive" style={{ maxHeight: '400px', overflowY: 'auto' }}>
                       <thead>
                         <tr>
                           <th>#</th>
