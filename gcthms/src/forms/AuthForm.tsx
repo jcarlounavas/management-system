@@ -56,7 +56,7 @@ const AuthForm: React.FC<{ mode: 'login' | 'register'; onAuth?: (user: any) => v
       setContactNumber('');
       setEmail('');
       setPassword('');
-      navigate('/login');
+      navigate('/');
     } else {
       setSuccess("✅ Login successful!");
       if (onAuth) onAuth(data); // Pass user info to parent if needed
