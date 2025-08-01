@@ -65,7 +65,7 @@ const StyledWrapper = styled.div<{ color: string }>`
     bottom: -2rem;
     left: 50%;
     transform: translateX(-50%);
-    background: rgba(255, 255, 255, 0.2);
+    background: rgba(255, 255, 255, 1);
     color: #fff;
     border: none;
     border-radius: 1rem;

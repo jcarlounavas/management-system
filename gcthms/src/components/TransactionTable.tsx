@@ -124,9 +124,9 @@ const TransactionTable: React.FC = () => {
   head: [tableColumn],
   body: tableRows,
   startY: 20,
-  theme: 'grid', // 🟩 grid = full border like Bootstrap "bordered"
+  theme: 'grid', 
   headStyles: {
-    fillColor: [52, 58, 64], // 🟦 dark header (like Bootstrap dark table)
+    fillColor: [52, 58, 64], 
     textColor: 255,
     fontStyle: 'bold',
     halign: 'center',

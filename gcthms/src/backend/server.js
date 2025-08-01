@@ -308,7 +308,7 @@ app.get('/api/summary/:id/details', async (req, res) => {
       summary_id: summary.summary_id,
       created_at: summary.created_at,
       file_name: summary.file_name,
-      descriptionSummaries, // 👈 replaces pairSummaries
+      descriptionSummaries, // replaces pairSummaries
       totalDebit: totals[0].totalDebit || 0,
       totalCredit: totals[0].totalCredit || 0,
       totalTransactions: totals[0].totalTransactions || 0,
@@ -318,6 +318,102 @@ app.get('/api/summary/:id/details', async (req, res) => {
     res.status(500).json({ error: 'Failed to fetch summary details' });
   }
 });
+
+
+//Inserting Contacts
+app.post('/api/contacts', async (req, res) => {
+  const { name, contactNumber } = req.body;
+
+  if (!name || !contactNumber) {
+    return res.status(400).json({ error: 'Name and contact number are required' });
+  }
+
+  try {
+    await db.query(
+      `INSERT INTO contacts (name, contact_number) VALUES (?, ?)`,
+      [name, contactNumber]
+    );
+
+    res.status(201).json({ message: 'Contact saved successfully' });
+  } catch (error) {
+    console.error('Error saving contact:', error);
+    res.status(500).json({ error: 'Failed to save contact' });
+  }
+});
+
+//Extracting Contacts
+app.get('/api/all/contacts', async (req, res) => {
+  try {
+    const [rows] = await db.query(`
+      SELECT id, name, contact_number AS phone, created_at 
+      FROM contacts 
+      ORDER BY created_at DESC
+    `);
+    res.json(rows);
+  } catch (error) {
+    console.error('Error fetching contacts:', error);
+    res.status(500).json({ error: 'Failed to fetch contacts' });
+  }
+});
+
+
+//Transactions of every contacts
+app.get('/api/contacts/:id/transactions', async (req, res) => {
+  const { id } = req.params;
+
+  const transactionSql = `
+    SELECT 
+      t.*,
+      c.id AS contact_id,
+      c.name AS contact_name,
+      CASE 
+        WHEN t.sender = c.contact_number THEN 'Sender'
+        WHEN t.receiver = c.contact_number THEN 'Receiver'
+      END AS role,
+      sender_contact.name AS sender_name,
+      receiver_contact.name AS receiver_name,
+      CONCAT(
+        'Transfer from ',
+        COALESCE(sender_contact.name, t.sender),
+        ' to ',
+        COALESCE(receiver_contact.name, t.receiver)
+      ) AS description_with_names
+    FROM transactions t
+    JOIN contacts c
+      ON t.sender = c.contact_number OR t.receiver = c.contact_number
+    LEFT JOIN contacts sender_contact
+      ON t.sender = sender_contact.contact_number
+    LEFT JOIN contacts receiver_contact
+      ON t.receiver = receiver_contact.contact_number
+    WHERE c.id = ?
+    ORDER BY t.tx_date DESC
+  `;
+
+  const totalsSql = `
+    SELECT 
+      SUM(CASE WHEN t.receiver = c.contact_number THEN t.credit ELSE 0 END) AS total_credit,
+      SUM(CASE WHEN t.sender = c.contact_number THEN t.debit ELSE 0 END) AS total_debit
+    FROM transactions t
+    JOIN contacts c ON c.id = ?
+  `;
+
+  try {
+    const [transactions] = await db.query(transactionSql, [id]);
+    const [[totals]] = await db.query(totalsSql, [id]);
+
+    res.json({
+      transactions,
+      totals,
+    });
+  } catch (err) {
+    console.error('Error fetching contact transactions:', err);
+    res.status(500).json({ error: 'Failed to retrieve transactions' });
+  }
+});
+
+
+
+
 
 
 
