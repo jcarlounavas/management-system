@@ -65,18 +65,24 @@ app.post('/api/login', async (req, res) => {
       return res.status(401).json({ error: 'Invalid email or password' });
     }
 
+    // ✅ Fix: return user under "user" key
     res.json({
-      id: user.id,
-      firstname: user.firstname,
-      lastname: user.lastname,
-      email: user.email,
-      contact_number: user.contact_number,
+      user: {
+        id: user.id,
+        firstname: user.firstname,
+        lastname: user.lastname,
+        email: user.email,
+        contact_number: user.contact_number
+      },
+      token: 'dummy-token-for-now' // optional
     });
+
   } catch (err) {
     console.error('Login Error:', err);
     res.status(500).json({ error: 'Database error' });
   }
 });
+
 
 // ✅ Upload Summary + Transactions
 app.post('/api/summary', async (req, res) => {
@@ -264,9 +270,4 @@ app.get('/api/individuals', async (req, res) => {
 // ✅ 404 Fallback
 app.use((req, res) => {
   res.status(404).json({ error: 'Endpoint not found' });
-});
-
-// ✅ Start Server
-app.listen(PORT, () => {
-  console.log(`✅ Server running at http://localhost:${PORT}`);
 });
