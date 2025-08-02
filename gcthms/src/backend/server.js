@@ -34,15 +34,8 @@ app.post('/api/register', async (req, res) => {
     console.error('Register Error:', err);
     res.status(500).json({ error: 'Database error' });
   }
-<<<<<<< HEAD
-}); 
-// ✅ Login endpoint
-=======
 });
 
-    
-//  Login endpoint
->>>>>>> 138a83c (Transactions Contact with Filter)
 app.post('/api/login', async (req, res) => {
   const { email, password } = req.body;
 
@@ -83,6 +76,7 @@ app.post('/api/summary', async (req, res) => {
     fileName,
     numberOfTransactions,
     transactions = [],
+    user_id
   } = req.body;
 
   if (!fileName || numberOfTransactions == null) {
@@ -92,9 +86,9 @@ app.post('/api/summary', async (req, res) => {
   try {
     // Insert into summary
     const [result] = await db.query(
-      `INSERT INTO summary (file_name, total_transaction)
-       VALUES (?, ?)`,
-      [fileName, numberOfTransactions]
+      `INSERT INTO summary (file_name, total_transaction, user_id)
+       VALUES (?, ?, ?)`,
+      [fileName, numberOfTransactions, user_id]
     );
 
     const summaryId = result.insertId;
@@ -334,16 +328,17 @@ app.get('/api/summary/:id/details', async (req, res) => {
 
 //Inserting Contacts
 app.post('/api/contacts', async (req, res) => {
-  const { name, contactNumber } = req.body;
+  const { name, contactNumber, user_id } = req.body;
 
-  if (!name || !contactNumber) {
-    return res.status(400).json({ error: 'Name and contact number are required' });
+  // Validate input
+  if (!name || !contactNumber || !user_id) {
+    return res.status(400).json({ error: 'Name, contact number, and user_id are required' });
   }
 
   try {
     await db.query(
-      `INSERT INTO contacts (name, contact_number) VALUES (?, ?)`,
-      [name, contactNumber]
+      `INSERT INTO contacts (name, contact_number, user_id) VALUES (?, ?, ?)`,
+      [name, contactNumber, user_id]
     );
 
     res.status(201).json({ message: 'Contact saved successfully' });
@@ -353,20 +348,27 @@ app.post('/api/contacts', async (req, res) => {
   }
 });
 
+
 //Extracting Contacts
-app.get('/api/all/contacts', async (req, res) => {
+app.get('/api/contacts', async (req, res) => {
+  const user_id = req.query.user_id;
+
+  if (!user_id) {
+    return res.status(400).json({ error: 'Missing user_id in query' });
+  }
+
   try {
-    const [rows] = await db.query(`
-      SELECT id, name, contact_number AS phone, created_at 
-      FROM contacts 
-      ORDER BY created_at DESC
-    `);
+    const [rows] = await db.query(
+  `SELECT id, name, contact_number, created_at FROM contacts WHERE user_id = ? AND user_id IS NOT NULL ORDER BY created_at DESC`,
+  [user_id]
+);
     res.json(rows);
   } catch (error) {
     console.error('Error fetching contacts:', error);
     res.status(500).json({ error: 'Failed to fetch contacts' });
   }
 });
+
 
 
 //Transactions of every contacts

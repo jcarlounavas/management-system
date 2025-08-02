@@ -349,7 +349,6 @@ const FileReader = ({ file, accNum }: { file: File | null, accNum: string }) => 
               ))}
             <tr className="table-footer">
               <td>Total</td>
-              <td></td>
               <td>{summary.transactions.length}</td>
               <td>{summary.totalDebit.toLocaleString()}</td>
               <td>{summary.totalCredit.toLocaleString()}</td>
