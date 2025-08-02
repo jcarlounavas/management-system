@@ -34,12 +34,7 @@ app.post('/api/register', async (req, res) => {
     console.error('Register Error:', err);
     res.status(500).json({ error: 'Database error' });
   }
-});
-
-app.listen(PORT, () => {
-  console.log(`✅ Server running at http://localhost:${PORT}`);
-});
-    
+}); 
 // ✅ Login endpoint
 app.post('/api/login', async (req, res) => {
   const { email, password } = req.body;
