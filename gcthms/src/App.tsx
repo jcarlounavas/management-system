@@ -25,6 +25,7 @@ const App: React.FC = () => {
         <Route path="/register" element={<AuthForm mode="register" />} />
 
         {/* Protected Routes */}
+<<<<<<< HEAD
         <Route path="/dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
         <Route path="/upload" element={<ProtectedRoute><UploadPage /></ProtectedRoute>} />
         <Route path="/individual" element={<ProtectedRoute><DisplayInditranc /></ProtectedRoute>} />
@@ -32,6 +33,72 @@ const App: React.FC = () => {
         <Route path="/FormContacts/:id" element={<ProtectedRoute><FormContact /></ProtectedRoute>} />
        <Route path="/contacts/new" element={<ProtectedRoute><Contacts /></ProtectedRoute>} />
        <Route path="/contacts/:id/transactions" element={<ProtectedRoute><ContactTransactions /></ProtectedRoute>} />
+=======
+        <Route
+          path="/dashboard"
+          element={
+            <ProtectedRoute>
+              <Dashboard />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/upload"
+          element={
+            <ProtectedRoute>
+              <UploadPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/individual"
+          element={
+            <ProtectedRoute>
+              <DisplayInditranc />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/summary"
+          element={
+            <ProtectedRoute>
+              <DisplaySummary />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/contacts"
+          element={
+            <ProtectedRoute>
+              <Contacts />
+            </ProtectedRoute>
+          }
+        />
+
+        <Route path="/summary/:id" element={
+          <ProtectedRoute>
+            <ViewPage />
+          </ProtectedRoute>
+        } />
+        
+        <Route path="/contacts/new" 
+        element={
+          <ProtectedRoute>
+            <FormContact />
+          </ProtectedRoute>
+        }
+        />
+
+        <Route path="/contacts/:id/transactions" 
+        element={
+          <ProtectedRoute>
+            <ContactTransactions />
+          </ProtectedRoute>
+        }
+        />
+
+
+>>>>>>> 138a83c (Transactions Contact with Filter)
       </Routes>
     </Router>
   );

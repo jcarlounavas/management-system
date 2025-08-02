@@ -284,15 +284,15 @@ const TransactionTable: React.FC = () => {
                           <td>{tx.type}</td>
                           <td>{tx.sender}</td>
                           <td>{tx.receiver}</td>
-                          <td>{tx.debit.toFixed(2)}</td>
-                          <td>{tx.credit.toFixed(2)}</td>
+                          <td className='text-end'>{tx.debit.toFixed(2)}</td>
+                          <td className='text-end'>{tx.credit.toFixed(2)}</td>
                         </tr>
                       ))}
                       <tr className="table-secondary fw-bold">
                         <td><h4>Total</h4></td>
                         <td colSpan={5}></td>
-                        <td>{totalDebit.toFixed(2)}</td>
-                        <td>{totalCredit.toFixed(2)}</td>
+                        <td className='text-end'>{totalDebit.toFixed(2)}</td>
+                        <td className='text-end'>{totalCredit.toFixed(2)}</td>
                       </tr>
                     </tbody>
                   </table>

@@ -25,16 +25,18 @@ const Contacts: React.FC = () => {
     <DashboardLayout>
       <div className="pc-container">
         <div className="pc-content">
-          <div className="page-header mb-4">
-            <div className="d-flex justify-content-between align-items-center">
-              <h1 className='text-center'>Contacts</h1>
+                        <div className="page-header">
+              <div className="page-block">
+                <div className="card-header">
+                  <h2 className="text-center">Contacts</h2>
+                </div>
+              </div>
             </div>
-          </div>
-          <div className="align-items-center justify-content-center text-center mb-2">
-              <Link to="/contacts/new" className="btn btn-primary shadow text-center">
-                Add Contact
-              </Link>
-          </div>
+              <div className="align-items-center justify-content-center text-center mb-2">
+                  <Link to="/contacts/new" className="btn btn-primary shadow text-center">
+                    Add Contact
+                  </Link>
+              </div>
 
           <div className="row justify-content-center">
             <div className="col-xl-10 col-md-12">

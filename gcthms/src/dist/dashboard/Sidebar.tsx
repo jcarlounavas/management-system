@@ -49,8 +49,9 @@ const Sidebar: React.FC<SidebarProps> = ({ isSidebarHidden }) => {
                       style={{ zIndex: 10, position: 'relative' }}
                     />
                     <div>
-                      <div><h6 className="mb-1  text-white fw-bold fs-6">USER</h6></div>
-                      <small style={{ fontSize: 12, color: '#ccc' }}>View Profile</small>
+                      <Link to={'/profile'}>
+                      View Profile
+                      </Link>
                     </div>
                   </div>
 

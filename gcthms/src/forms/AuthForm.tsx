@@ -67,7 +67,7 @@ const AuthForm: React.FC<{ mode: 'login' | 'register'; onAuth?: (user: any) => v
       }
 
       if (mode === 'register') {
-        setSuccess('✅ Registered successfully!');
+        setSuccess('Registered successfully!');
         setFirstname('');
         setLastname('');
         setContactNumber('');
@@ -75,14 +75,27 @@ const AuthForm: React.FC<{ mode: 'login' | 'register'; onAuth?: (user: any) => v
         setPassword('');
         navigate('/');
       } else {
+<<<<<<< HEAD
         setSuccess('✅ Login successful!');
         localStorage.setItem('token', data.token);
         localStorage.setItem('user', JSON.stringify(data.user));
         if (onAuth) onAuth(data.user);
         navigate('/dashboard');
       }
+=======
+   setSuccess('Login successful!');
+localStorage.setItem('token', data.token);
+localStorage.setItem('user', JSON.stringify(data.user));
+
+if (onAuth) onAuth(data.user);
+
+// Navigate after everything is stored
+navigate('/dashboard');
+}
+
+>>>>>>> 138a83c (Transactions Contact with Filter)
     } catch (err: any) {
-      console.error(`❌ ${mode} failed:`, err);
+      console.error(` ${mode} failed:`, err);
       setError(err.message || 'Server error');
     }
   };

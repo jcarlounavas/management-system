@@ -34,8 +34,15 @@ app.post('/api/register', async (req, res) => {
     console.error('Register Error:', err);
     res.status(500).json({ error: 'Database error' });
   }
+<<<<<<< HEAD
 }); 
 // ✅ Login endpoint
+=======
+});
+
+    
+//  Login endpoint
+>>>>>>> 138a83c (Transactions Contact with Filter)
 app.post('/api/login', async (req, res) => {
   const { email, password } = req.body;
 
@@ -52,7 +59,7 @@ app.post('/api/login', async (req, res) => {
       return res.status(401).json({ error: 'Invalid email or password' });
     }
 
-    // ✅ Fix: return user under "user" key
+    // Fix: return user under "user" key
     res.json({
       user: {
         id: user.id,
@@ -175,58 +182,6 @@ app.get('/api/transactions', async (req, res) => {
 });
 
 //GET Summary
-// app.get('/api/summary/grouped', async (req, res) => {
-//   try {
-//     const [summaries] = await db.query(`
-//       SELECT id AS summary_id, created_at, file_name
-//       FROM summary
-//       ORDER BY created_at DESC
-//     `);
-
-//     const groupedSummaries = [];
-
-//     for (const summary of summaries) {
-//       const [pairSummaries] = await db.query(
-//         `SELECT 
-//            CONCAT(sender, ' → ', receiver) AS pair,
-//            COUNT(*) AS count,
-//            SUM(debit) AS totalDebit,
-//            SUM(credit) AS totalCredit
-//          FROM transactions
-//          WHERE summary_id = ?
-//          GROUP BY sender, receiver
-//          ORDER BY count DESC`,
-//         [summary.summary_id]
-//       );
-
-//       const [totals] = await db.query(
-//         `SELECT 
-//            COUNT(*) AS totalTransactions,
-//            SUM(debit) AS totalDebit,
-//            SUM(credit) AS totalCredit
-//          FROM transactions
-//          WHERE summary_id = ?`,
-//         [summary.summary_id]
-//       );
-
-//       groupedSummaries.push({
-//         summary_id: summary.summary_id,
-//         created_at: summary.created_at,
-//         file_name: summary.file_name,
-//         pairSummaries,
-//         totalDebit: totals[0].totalDebit || 0,
-//         totalCredit: totals[0].totalCredit || 0,
-//         totalTransactions: totals[0].totalTransactions || 0
-//       });
-//     }
-
-//     res.json(groupedSummaries);
-//   } catch (error) {
-//     console.error('Error fetching grouped summaries:', error);
-//     res.status(500).json({ error: 'Failed to fetch grouped summary transactions' });
-//   }
-// });
-// backend/index.js or wherever your routes are
 app.get('/api/summary/all', async (req, res) => {
   try {
     const [rows] = await db.query(`
@@ -249,12 +204,6 @@ app.get('/api/summary/all', async (req, res) => {
     res.status(500).json({ error: 'Failed to fetch summary list' });
   }
 });
-
-
-
-
-
-
 
 
 
@@ -449,16 +398,20 @@ app.get('/api/contacts/:id/transactions', async (req, res) => {
     LEFT JOIN contacts receiver_contact
       ON t.receiver = receiver_contact.contact_number
     WHERE c.id = ?
-    ORDER BY t.tx_date DESC
+    ORDER BY t.tx_date ASC
   `;
 
   const totalsSql = `
-    SELECT 
-      SUM(CASE WHEN t.receiver = c.contact_number THEN t.credit ELSE 0 END) AS total_credit,
-      SUM(CASE WHEN t.sender = c.contact_number THEN t.debit ELSE 0 END) AS total_debit
-    FROM transactions t
-    JOIN contacts c ON c.id = ?
-  `;
+  SELECT 
+    COALESCE(SUM(CASE WHEN t.receiver = c.contact_number THEN t.credit ELSE 0 END), 0) AS total_credit,
+    COALESCE(SUM(CASE WHEN t.sender = c.contact_number THEN t.debit ELSE 0 END), 0) AS total_debit
+  FROM transactions t
+  JOIN contacts c 
+    ON (t.sender = c.contact_number OR t.receiver = c.contact_number)
+  WHERE c.id = ?
+`;
+
+
 
   try {
     const [transactions] = await db.query(transactionSql, [id]);
@@ -473,6 +426,11 @@ app.get('/api/contacts/:id/transactions', async (req, res) => {
     res.status(500).json({ error: 'Failed to retrieve transactions' });
   }
 });
+
+
+
+
+//Deletion of Summary Transactions.
 
 // Start Server
 app.listen(PORT, () => {
