@@ -79,7 +79,7 @@ app.post('/api/summary', async (req, res) => {
     user_id
   } = req.body;
 
-  if (!fileName || numberOfTransactions == null) {
+  if (!fileName || numberOfTransactions == null || !user_id) {
     return res.status(400).json({ error: "Missing required summary fields" });
   }
 
@@ -157,13 +157,23 @@ app.post('/api/summary', async (req, res) => {
 
 // GET: All Transactions (optional date filtering)
 app.get('/api/transactions', async (req, res) => {
-  const { startDate, endDate } = req.query;
+  const { startDate, endDate, user_id } = req.query;
+
   try {
-    let query = 'SELECT * FROM transactions';
-    const params = [];
+    if (!user_id) {
+      return res.status(400).json({ error: 'Missing required user_id' });
+    }
+
+    let query = `
+      SELECT t.*
+      FROM transactions t
+      JOIN summary s ON t.summary_id = s.id
+      WHERE s.user_id = ?
+    `;
+    const params = [user_id];
 
     if (startDate && endDate) {
-      query += ' WHERE tx_date BETWEEN ? AND ?';
+      query += ' AND t.tx_date BETWEEN ? AND ?';
       params.push(startDate, endDate);
     }
 
@@ -175,8 +185,15 @@ app.get('/api/transactions', async (req, res) => {
   }
 });
 
+
 //GET Summary
 app.get('/api/summary/all', async (req, res) => {
+  const user_id = req.query.user_id;
+
+  if (!user_id) {
+    return res.status(400).json({ error: 'Missing user_id' });
+  }
+
   try {
     const [rows] = await db.query(`
       SELECT
@@ -188,11 +205,12 @@ app.get('/api/summary/all', async (req, res) => {
         COALESCE(SUM(t.credit), 0) AS totalCredit
       FROM summary s
       LEFT JOIN transactions t ON s.id = t.summary_id
+      WHERE s.user_id = ?
       GROUP BY s.id, s.file_name
       ORDER BY s.id DESC
-    `);
+    `, [user_id]);
 
-    res.json(rows); // return array directly
+    res.json(rows);
   } catch (error) {
     console.error(error);
     res.status(500).json({ error: 'Failed to fetch summary list' });
@@ -201,6 +219,7 @@ app.get('/api/summary/all', async (req, res) => {
 
 
 
+//Total Summary Transactions
 app.get('/api/summary/:id/totals', async (req, res) => {
   const summaryId = req.params.id;
 
@@ -433,6 +452,16 @@ app.get('/api/contacts/:id/transactions', async (req, res) => {
 
 
 //Deletion of Summary Transactions.
+app.delete('/api/summary/:id', async (req, res) => {
+  const { id } = req.params;
+  try {
+    await db.query('DELETE FROM summary WHERE id = ?', [id]);
+    res.json({ message: 'Summary deleted successfully' });
+  } catch (error) {
+    console.error('Delete error:', error);
+    res.status(500).json({ error: 'Failed to delete summary' });
+  }
+});
 
 // Start Server
 app.listen(PORT, () => {

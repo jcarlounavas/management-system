@@ -20,7 +20,14 @@ const Summary: React.FC = () => {
   }, []);
 
   const fetchSummaries = () => {
-    fetch('http://localhost:3001/api/summary/all')
+    const userId = localStorage.getItem('user_id');
+    if (!userId) {
+      console.error('User ID not found in localStorage');
+      setLoading(false);
+      return;
+    }
+
+    fetch(`http://localhost:3001/api/summary/all?user_id=${userId}`)
       .then((res) => res.json())
       .then((data) => {
         console.log('Fetched summary totals:', data);
@@ -134,6 +141,7 @@ const Summary: React.FC = () => {
 };
 
 export default Summary;
+
 
 
 

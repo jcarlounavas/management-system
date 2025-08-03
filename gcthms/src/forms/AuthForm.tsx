@@ -76,6 +76,7 @@ const AuthForm: React.FC<{ mode: 'login' | 'register'; onAuth?: (user: any) => v
         navigate('/');
       } else {
    setSuccess('Login successful!');
+localStorage.setItem('user_id', data.user.id);
 localStorage.setItem('token', data.token);
 localStorage.setItem('user', JSON.stringify(data.user));
 

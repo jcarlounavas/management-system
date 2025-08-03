@@ -22,6 +22,7 @@ interface SaveButtonProps {
 }
 
 interface SummaryPayload {
+  user_id: number;
   fileName: string;
   numberOfTransactions: number;
   transactions: Transaction[];
@@ -66,11 +67,22 @@ const SaveButton: React.FC<SaveButtonProps> = ({ fileName, summary }) => {
   return (
     <button
       className="btn btn-success"
-      onClick={() => handleSubmit({
-        fileName,
-        numberOfTransactions: summary.transactions.length,
-        transactions: summary.transactions
-      })}
+      onClick={() => {
+        const rawUserId = localStorage.getItem("user_id");
+        const user_id = rawUserId ? Number(rawUserId) : null;
+
+        if (!user_id) {
+          alert("User ID not found. Please log in again.");
+          return;
+        }
+
+        handleSubmit({
+          user_id,
+          fileName,
+          numberOfTransactions: summary.transactions.length,
+          transactions: summary.transactions
+        });
+      }}
       disabled={isSaving}
     >
       {isSaving ? 'Saving...' : 'Save to Database'}
