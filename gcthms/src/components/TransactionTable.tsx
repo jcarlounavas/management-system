@@ -1,7 +1,10 @@
 import React, { useEffect, useState } from 'react';
 import DashboardLayout from '../dist/dashboard/DashboardLayout';
 import jsPDF from 'jspdf';
+import PictureAsPdfIcon from '@mui/icons-material/PictureAsPdf';
+import FileDownloadIcon from '@mui/icons-material/FileDownload';
 import autoTable from 'jspdf-autotable';
+import * as XLSX from 'xlsx';
 
 interface Transaction {
   tx_date: string;
@@ -153,6 +156,38 @@ const TransactionTable: React.FC = () => {
     doc.save(`${fileName}.pdf`);
   };
 
+  const handleExportExcel = () => {
+  const fileName = prompt("Enter a file name for the Excel file:", "Filtered_Transactions");
+  if (!fileName) return;
+
+  const data = filteredTransactions.map(tx => ({
+    Date: formatDate(tx.tx_date),
+    'Reference No': tx.reference_no,
+    Description: tx.description,
+    Type: tx.type,
+    Sender: tx.sender,
+    Receiver: tx.receiver,
+    Debit: tx.debit,
+    Credit: tx.credit,
+  }));
+
+  data.push({
+    Date: 'TOTAL',
+    'Reference No': '',
+    Description: '',
+    Type: '',
+    Sender: '',
+    Receiver: '',
+    Debit: totalDebit,
+    Credit: totalCredit,
+  });
+
+  const worksheet = XLSX.utils.json_to_sheet(data);
+  const workbook = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(workbook, worksheet, 'Transactions');
+  XLSX.writeFile(workbook, `${fileName}.xlsx`);
+};
+
   return (
     <DashboardLayout>
       <div data-pc-preset="preset-1" data-pc-sidebar-caption="false" data-pc-direction="ltr" data-pc-theme="light">
@@ -205,7 +240,14 @@ const TransactionTable: React.FC = () => {
                   <input type="text" className="form-control" placeholder={`Search ${searchCategory}`} value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} />
                 </div>
                 <div className="mb-3 text-end">
-                  <button className="btn btn-outline-primary" onClick={handleExportPDF}>Export to PDF</button>
+                  <button className="btn btn-outline-primary me-4" onClick={handleExportPDF}>
+                    <PictureAsPdfIcon style={{ fontSize: '1.2rem' }} />
+                    Export to PDF
+                    </button>
+                  <button className="btn btn-outline-success" onClick={handleExportExcel}>
+                    <FileDownloadIcon style={{ fontSize: '1.2rem' }} />
+                    Export to Excel
+                    </button>
                 </div>
               </div>
 
@@ -218,7 +260,7 @@ const TransactionTable: React.FC = () => {
               ) : filteredTransactions.length === 0 ? (
                 <div className="alert alert-info text-center">No transactions found.</div>
               ) : (
-                <div className="table-responsive" style={{ maxHeight: '400px', overflowY: 'auto' }}>
+                <div className="table-responsive" style={{ maxHeight: '650px', overflowY: 'auto' }}>
                   <table className="table table-bordered table-striped">
                     <thead className="table-primary">
                       <tr>
