@@ -1,4 +1,3 @@
-// AuthForm
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 
@@ -17,14 +16,39 @@ const AuthForm: React.FC<{ mode: 'login' | 'register'; onAuth?: (user: any) => v
     setError('');
     setSuccess('');
 
-    if (mode === 'login' && (!email.trim() || !password.trim())) {
-      setError('Please enter both email and password.');
-      return;
+    const isEmailValid = /^[a-zA-Z0-9._%+-]+@(gmail|yahoo|outlook|hotmail)\.com$/.test(email);
+    const isPasswordValid = password.length >= 6;
+    const isContactValid = /^9\d{9}$/.test(contactNumber.trim()); // Must start with 9 and be 10 digits
+
+    if (mode === 'register') {
+      if (!firstname.trim() || !lastname.trim()) {
+        setError('Please enter both first and last names.');
+        return;
+      }
+
+      if (!isContactValid) {
+        setError('Contact number must start with 9 and be exactly 10 digits.');
+        return;
+      }
+
+      if (!isEmailValid) {
+        setError('Please enter a valid email address.');
+        return;
+      }
+
+      if (!isPasswordValid) {
+        setError('Password must be at least 6 characters long.');
+        return;
+      }
+    } else {
+      if (!email.trim() || !password.trim()) {
+        setError('Please enter both email and password.');
+        return;
+      }
     }
 
     try {
       const endpoint = mode === 'register' ? '/api/register' : '/api/login';
-
       const payload =
         mode === 'register'
           ? { firstname, lastname, contact_number: contactNumber, email, password }
@@ -43,7 +67,7 @@ const AuthForm: React.FC<{ mode: 'login' | 'register'; onAuth?: (user: any) => v
       }
 
       if (mode === 'register') {
-        setSuccess('✅ Registered successfully!');
+        setSuccess('Registered successfully!');
         setFirstname('');
         setLastname('');
         setContactNumber('');
@@ -51,9 +75,11 @@ const AuthForm: React.FC<{ mode: 'login' | 'register'; onAuth?: (user: any) => v
         setPassword('');
         navigate('/');
       } else {
-   setSuccess('✅ Login successful!');
+   setSuccess('Login successful!');
+localStorage.setItem('user_id', data.user.id);
 localStorage.setItem('token', data.token);
 localStorage.setItem('user', JSON.stringify(data.user));
+
 
 if (onAuth) onAuth(data.user);
 
@@ -62,19 +88,13 @@ navigate('/dashboard');
 }
 
     } catch (err: any) {
-      console.error(`❌ ${mode} failed:`, err);
+      console.error(` ${mode} failed:`, err);
       setError(err.message || 'Server error');
     }
   };
 
   return (
-    <div
-      className="auth-main"
-      data-pc-preset="preset-1"
-      data-pc-sidebar-caption="true"
-      data-pc-direction="ltr"
-      data-pc-theme="light"
-    >
+    <div className="auth-main" data-pc-preset="preset-1" data-pc-sidebar-caption="true" data-pc-direction="ltr" data-pc-theme="light">
       <div className="loader-bg">
         <div className="loader-track">
           <div className="loader-fill"></div>
@@ -131,23 +151,30 @@ navigate('/dashboard');
                             const onlyNums = e.target.value.replace(/\D/g, '');
                             if (onlyNums.length <= 11) setContactNumber(onlyNums);
                           }}
-                          maxLength={11}
+                          maxLength={10}
+                          pattern="9\d{10}"
+                          title="Must start with 09 and be exactly 11 digits"
                           required
                         />
+                        <small className="form-text text-muted">
+                          Must start with 09 and be exactly 11 digits.
+                        </small>
                       </div>
                     </>
                   )}
 
                   <div className="mb-3">
                     <input
-                      type="email"
-                      className="form-control"
-                      placeholder="Email Address"
-                      value={email}
-                      onChange={(e) => setEmail(e.target.value)}
-                      required
+                        type="email"
+                        className="form-control"
+                        placeholder="Email Address"
+                        value={email}
+                        onChange={(e) => setEmail(e.target.value)}
+                        pattern="^[a-zA-Z0-9._%+-]+@(gmail|yahoo|outlook|hotmail)\.com$"
+                        title="Email must end with @gmail.com, @yahoo.com, @outlook.com, or @hotmail.com"
+                        required
                     />
-                  </div>
+                    </div>
                   <div className="mb-3">
                     <input
                       type="password"

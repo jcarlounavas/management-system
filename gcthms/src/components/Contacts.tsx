@@ -12,28 +12,35 @@ interface Contact {
 
 const Contacts: React.FC = () => {
   const [contacts, setContacts] = useState<Contact[]>([]);
-
+  
   useEffect(() => {
-    // Replace this fetch with your actual API endpoint
-    fetch('http://localhost:3001/api/all/contacts')
-      .then(res => res.json())
-      .then(data => setContacts(data))
-      .catch(err => console.error('Failed to load contacts:', err));
-  }, []);
+  const user = JSON.parse(localStorage.getItem('user') || '{}');
+  const userId = user?.id; // adjust field name
+
+  if (!userId) return;
+
+  fetch(`http://localhost:3001/api/contacts?user_id=${userId}`)
+    .then((res) => res.json())
+    .then((data) => setContacts(data))
+    .catch((err) => console.error('Failed to fetch contacts:', err));
+}, []);
 
   return (
     <DashboardLayout>
       <div className="pc-container">
         <div className="pc-content">
-          <div className="page-header mb-4">
-            <div className="d-flex justify-content-between align-items-center">
-              <h1 className='text-center'>Contacts</h1>
+          <div className="page-header">
+            <div className="page-block">
+              <div className="card-header">
+                <h2 className="text-center">Contacts</h2>
+              </div>
             </div>
           </div>
+
           <div className="align-items-center justify-content-center text-center mb-2">
-              <Link to="/contacts/new" className="btn btn-primary shadow text-center">
-                Add Contact
-              </Link>
+            <Link to="/contacts/new" className="btn btn-primary shadow text-center" target="_blank">
+              Add Contact
+            </Link>
           </div>
 
           <div className="row justify-content-center">
@@ -46,31 +53,22 @@ const Contacts: React.FC = () => {
                         <tr>
                           <th></th>
                           <th>Name with Phone No.</th>
-                          <th className='text-center'>Action</th>
+                          <th className="text-center">Action</th>
                         </tr>
-                        
-                        </thead>
+                      </thead>
                       <tbody>
                         {contacts.map((contact) => (
                           <tr className="unread" key={contact.id}>
-                            <td>
-                              {/* <img
-                                className="rounded-circle"
-                                style={{ width: 40 }}
-                                src={`../assets/images/user/${contact.avatar}`}
-                                alt="user"
-                              /> */}
-                            </td>
+                            <td></td>
                             <td>
                               <h6 className="mb-1">{contact.name}</h6>
                               <p className="m-0">{contact.phone}</p>
                             </td>
-
-                            <td className='text-center'>
+                            <td className="text-center">
                               <Link
                                 to={`/contacts/${contact.id}/transactions`}
                                 className="badge me-2 bg-brand-color-2 text-white f-12"
-                                target='_blank'
+                                target="_blank"
                               >
                                 See All Transactions
                               </Link>

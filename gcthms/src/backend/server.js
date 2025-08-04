@@ -36,11 +36,6 @@ app.post('/api/register', async (req, res) => {
   }
 });
 
-app.listen(PORT, () => {
-  console.log(`✅ Server running at http://localhost:${PORT}`);
-});
-    
-// ✅ Login endpoint
 app.post('/api/login', async (req, res) => {
   const { email, password } = req.body;
 
@@ -57,7 +52,7 @@ app.post('/api/login', async (req, res) => {
       return res.status(401).json({ error: 'Invalid email or password' });
     }
 
-    // ✅ Fix: return user under "user" key
+    // Fix: return user under "user" key
     res.json({
       user: {
         id: user.id,
@@ -81,18 +76,19 @@ app.post('/api/summary', async (req, res) => {
     fileName,
     numberOfTransactions,
     transactions = [],
+    user_id
   } = req.body;
 
-  if (!fileName || numberOfTransactions == null) {
+  if (!fileName || numberOfTransactions == null || !user_id) {
     return res.status(400).json({ error: "Missing required summary fields" });
   }
 
   try {
     // Insert into summary
     const [result] = await db.query(
-      `INSERT INTO summary (file_name, total_transaction)
-       VALUES (?, ?)`,
-      [fileName, numberOfTransactions]
+      `INSERT INTO summary (file_name, total_transaction, user_id)
+       VALUES (?, ?, ?)`,
+      [fileName, numberOfTransactions, user_id]
     );
 
     const summaryId = result.insertId;
@@ -161,13 +157,23 @@ app.post('/api/summary', async (req, res) => {
 
 // GET: All Transactions (optional date filtering)
 app.get('/api/transactions', async (req, res) => {
-  const { startDate, endDate } = req.query;
+  const { startDate, endDate, user_id } = req.query;
+
   try {
-    let query = 'SELECT * FROM transactions';
-    const params = [];
+    if (!user_id) {
+      return res.status(400).json({ error: 'Missing required user_id' });
+    }
+
+    let query = `
+      SELECT t.*
+      FROM transactions t
+      JOIN summary s ON t.summary_id = s.id
+      WHERE s.user_id = ?
+    `;
+    const params = [user_id];
 
     if (startDate && endDate) {
-      query += ' WHERE tx_date BETWEEN ? AND ?';
+      query += ' AND t.tx_date BETWEEN ? AND ?';
       params.push(startDate, endDate);
     }
 
@@ -179,60 +185,15 @@ app.get('/api/transactions', async (req, res) => {
   }
 });
 
+
 //GET Summary
-// app.get('/api/summary/grouped', async (req, res) => {
-//   try {
-//     const [summaries] = await db.query(`
-//       SELECT id AS summary_id, created_at, file_name
-//       FROM summary
-//       ORDER BY created_at DESC
-//     `);
-
-//     const groupedSummaries = [];
-
-//     for (const summary of summaries) {
-//       const [pairSummaries] = await db.query(
-//         `SELECT 
-//            CONCAT(sender, ' → ', receiver) AS pair,
-//            COUNT(*) AS count,
-//            SUM(debit) AS totalDebit,
-//            SUM(credit) AS totalCredit
-//          FROM transactions
-//          WHERE summary_id = ?
-//          GROUP BY sender, receiver
-//          ORDER BY count DESC`,
-//         [summary.summary_id]
-//       );
-
-//       const [totals] = await db.query(
-//         `SELECT 
-//            COUNT(*) AS totalTransactions,
-//            SUM(debit) AS totalDebit,
-//            SUM(credit) AS totalCredit
-//          FROM transactions
-//          WHERE summary_id = ?`,
-//         [summary.summary_id]
-//       );
-
-//       groupedSummaries.push({
-//         summary_id: summary.summary_id,
-//         created_at: summary.created_at,
-//         file_name: summary.file_name,
-//         pairSummaries,
-//         totalDebit: totals[0].totalDebit || 0,
-//         totalCredit: totals[0].totalCredit || 0,
-//         totalTransactions: totals[0].totalTransactions || 0
-//       });
-//     }
-
-//     res.json(groupedSummaries);
-//   } catch (error) {
-//     console.error('Error fetching grouped summaries:', error);
-//     res.status(500).json({ error: 'Failed to fetch grouped summary transactions' });
-//   }
-// });
-// backend/index.js or wherever your routes are
 app.get('/api/summary/all', async (req, res) => {
+  const user_id = req.query.user_id;
+
+  if (!user_id) {
+    return res.status(400).json({ error: 'Missing user_id' });
+  }
+
   try {
     const [rows] = await db.query(`
       SELECT
@@ -244,11 +205,12 @@ app.get('/api/summary/all', async (req, res) => {
         COALESCE(SUM(t.credit), 0) AS totalCredit
       FROM summary s
       LEFT JOIN transactions t ON s.id = t.summary_id
+      WHERE s.user_id = ?
       GROUP BY s.id, s.file_name
       ORDER BY s.id DESC
-    `);
+    `, [user_id]);
 
-    res.json(rows); // return array directly
+    res.json(rows);
   } catch (error) {
     console.error(error);
     res.status(500).json({ error: 'Failed to fetch summary list' });
@@ -257,12 +219,7 @@ app.get('/api/summary/all', async (req, res) => {
 
 
 
-
-
-
-
-
-
+//Total Summary Transactions
 app.get('/api/summary/:id/totals', async (req, res) => {
   const summaryId = req.params.id;
 
@@ -390,16 +347,17 @@ app.get('/api/summary/:id/details', async (req, res) => {
 
 //Inserting Contacts
 app.post('/api/contacts', async (req, res) => {
-  const { name, contactNumber } = req.body;
+  const { name, contactNumber, user_id } = req.body;
 
-  if (!name || !contactNumber) {
-    return res.status(400).json({ error: 'Name and contact number are required' });
+  // Validate input
+  if (!name || !contactNumber || !user_id) {
+    return res.status(400).json({ error: 'Name, contact number, and user_id are required' });
   }
 
   try {
     await db.query(
-      `INSERT INTO contacts (name, contact_number) VALUES (?, ?)`,
-      [name, contactNumber]
+      `INSERT INTO contacts (name, contact_number, user_id) VALUES (?, ?, ?)`,
+      [name, contactNumber, user_id]
     );
 
     res.status(201).json({ message: 'Contact saved successfully' });
@@ -409,20 +367,27 @@ app.post('/api/contacts', async (req, res) => {
   }
 });
 
+
 //Extracting Contacts
-app.get('/api/all/contacts', async (req, res) => {
+app.get('/api/contacts', async (req, res) => {
+  const user_id = req.query.user_id;
+
+  if (!user_id) {
+    return res.status(400).json({ error: 'Missing user_id in query' });
+  }
+
   try {
-    const [rows] = await db.query(`
-      SELECT id, name, contact_number AS phone, created_at 
-      FROM contacts 
-      ORDER BY created_at DESC
-    `);
+    const [rows] = await db.query(
+  `SELECT id, name, contact_number, created_at FROM contacts WHERE user_id = ? AND user_id IS NOT NULL ORDER BY created_at DESC`,
+  [user_id]
+);
     res.json(rows);
   } catch (error) {
     console.error('Error fetching contacts:', error);
     res.status(500).json({ error: 'Failed to fetch contacts' });
   }
 });
+
 
 
 //Transactions of every contacts
@@ -454,16 +419,20 @@ app.get('/api/contacts/:id/transactions', async (req, res) => {
     LEFT JOIN contacts receiver_contact
       ON t.receiver = receiver_contact.contact_number
     WHERE c.id = ?
-    ORDER BY t.tx_date DESC
+    ORDER BY t.tx_date ASC
   `;
 
   const totalsSql = `
-    SELECT 
-      SUM(CASE WHEN t.receiver = c.contact_number THEN t.credit ELSE 0 END) AS total_credit,
-      SUM(CASE WHEN t.sender = c.contact_number THEN t.debit ELSE 0 END) AS total_debit
-    FROM transactions t
-    JOIN contacts c ON c.id = ?
-  `;
+  SELECT 
+    COALESCE(SUM(CASE WHEN t.receiver = c.contact_number THEN t.credit ELSE 0 END), 0) AS total_credit,
+    COALESCE(SUM(CASE WHEN t.sender = c.contact_number THEN t.debit ELSE 0 END), 0) AS total_debit
+  FROM transactions t
+  JOIN contacts c 
+    ON (t.sender = c.contact_number OR t.receiver = c.contact_number)
+  WHERE c.id = ?
+`;
+
+
 
   try {
     const [transactions] = await db.query(transactionSql, [id]);
@@ -476,6 +445,21 @@ app.get('/api/contacts/:id/transactions', async (req, res) => {
   } catch (err) {
     console.error('Error fetching contact transactions:', err);
     res.status(500).json({ error: 'Failed to retrieve transactions' });
+  }
+});
+
+
+
+
+//Deletion of Summary Transactions.
+app.delete('/api/summary/:id', async (req, res) => {
+  const { id } = req.params;
+  try {
+    await db.query('DELETE FROM summary WHERE id = ?', [id]);
+    res.json({ message: 'Summary deleted successfully' });
+  } catch (error) {
+    console.error('Delete error:', error);
+    res.status(500).json({ error: 'Failed to delete summary' });
   }
 });
 

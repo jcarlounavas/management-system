@@ -330,11 +330,10 @@ const FileReader = ({ file, accNum }: { file: File | null, accNum: string }) => 
         <table className="data-table">
           <thead>
             <tr>
-              <th>#</th>
-              <th>Sender → Receiver</th>
-              <th>Number of Transactions</th>
-              <th>Total Debit</th>
-              <th>Total Credit</th>
+              <th className='text-center'>Sender → Receiver</th>
+              <th className='text-center'>Number of Transactions</th>
+              <th className='text-center'>Total Debit</th>
+              <th className='text-center'>Total Credit</th>
             </tr>
           </thead>
           <tbody>
@@ -342,16 +341,14 @@ const FileReader = ({ file, accNum }: { file: File | null, accNum: string }) => 
               .sort((a, b) => b.count - a.count)
               .map((item, index) => (
                 <tr key={index}>
-                  <td>{index + 1}</td>
                   <td>{item.pair}</td>
-                  <td>{item.count}</td>
-                  <td>{item.totalDebit.toLocaleString()}</td>
-                  <td>{item.totalCredit.toLocaleString()}</td>
+                  <td className='text-center'>{item.count}</td>
+                  <td className='text-end'>{item.totalDebit.toLocaleString()}</td>
+                  <td className='text-end'>{item.totalCredit.toLocaleString()}</td>
                 </tr>
               ))}
             <tr className="table-footer">
               <td>Total</td>
-              <td></td>
               <td>{summary.transactions.length}</td>
               <td>{summary.totalDebit.toLocaleString()}</td>
               <td>{summary.totalCredit.toLocaleString()}</td>

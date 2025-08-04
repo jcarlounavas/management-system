@@ -13,7 +13,15 @@ const FormContact = () => {
       return;
     }
 
- setLoading(true);
+    const user = JSON.parse(localStorage.getItem('user') || '{}');
+    const user_id = user?.id;
+
+    if (!user_id) {
+      alert('User not authenticated. Please log in again.');
+      return;
+    }
+
+    setLoading(true);
 
     try {
       const response = await fetch('http://localhost:3001/api/contacts', {
@@ -21,7 +29,7 @@ const FormContact = () => {
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ name, contactNumber }),
+        body: JSON.stringify({ name, contactNumber, user_id }),
       });
 
       if (!response.ok) {
@@ -36,7 +44,7 @@ const FormContact = () => {
     } catch (error) {
       console.error('Error saving contact:', error);
       alert('Error saving contact');
-    }finally{
+    } finally {
       setLoading(false);
     }
   };
@@ -49,16 +57,14 @@ const FormContact = () => {
       data-pc-direction="ltr"
       data-pc-theme="light"
     >
-      {/* Pre-loader */}
-      {loading && ( 
-      <div className="loader-bg">
-        <div className="loader-track">
-          <div className="loader-fill"></div>
+      {loading && (
+        <div className="loader-bg">
+          <div className="loader-track">
+            <div className="loader-fill"></div>
+          </div>
         </div>
-      </div>
       )}
 
-      {/* Auth wrapper */}
       <div className="auth-wrapper v1">
         <div className="auth-form">
           <div className="position-relative">
@@ -114,7 +120,7 @@ const FormContact = () => {
             </div>
           </div>
         </div>
-      </div> 
+      </div>
     </div>
   );
 };
