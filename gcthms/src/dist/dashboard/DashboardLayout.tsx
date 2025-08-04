@@ -48,6 +48,7 @@ const toggleSidebar = () => setIsSidebarHidden(prev => !prev);
 </button>
         {/* <Header /> */}
         <main className="page-wrapper">
+          
           <div className="page-body">{children}</div>
         </main>
       </div>

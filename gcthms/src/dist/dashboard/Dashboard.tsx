@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import DashboardLayout from './DashboardLayout';
-import Card from '../../components/Card';
 
 interface Summary {
   id: number;
@@ -163,40 +162,117 @@ const Dashboard: React.FC = () => {
           </div>
 
           {/* Summary Cards */}
+
           <div className="row">
-            <div className="col-md-4 col-xl-4">
-              <Card
-                title="Total Debit"
-                body={loading.details ? 'Loading...' : currency.format(totals.total_debit)}
-                color="#007bffc9"
-              />
-            </div>
-            <div className="col-md-4 col-xl-4">
-              <Card
-                title="Total Credit"
-                body={loading.details ? 'Loading...' : currency.format(totals.total_credit)}
-                color="#007bffc9"
-              />
-            </div>
-            <div className="col-md-4 col-xl-4">
-              <Card
-                title="Total Transactions"
-                body={loading.details ? 'Loading...' : `${totalTransactions}`}
-                color="#007bffc9"
-              />
-            </div>
-            <div className="col-md-4 col-xl-4">
-              <Card
-                title="Files Uploaded"
-                body={loading.details ? 'Loading...' : `${totalSummaries}`}
-                color="#007bffc9"
-              />
-            </div>
+  <div className="col-md-3 col-sm-6 mb-3">
+    <div className="card" style={{ backgroundColor: '#fff', color: 'red' }}>
+      <div className="card-body">
+        <h6 className="mb-4">Total Debit</h6>
+        <div className="row d-flex align-items-center">
+          <div className="col-12">
+            <h3 className="f-w-300 d-flex align-items-center m-b-0">
+              {loading.details ? 'Loading...' : currency.format(totals.total_debit)}
+            </h3>
           </div>
         </div>
+        <div className="progress m-t-30" style={{ height: 7 }}>
+          <div
+            className="progress-bar bg-light"
+            role="progressbar"
+            style={{ width: '100%' }}
+            aria-valuenow={100}
+            aria-valuemin={0}
+            aria-valuemax={100}
+          />
+        </div>
       </div>
+    </div>
+  </div>
+
+  <div className="col-md-3 col-sm-6 mb-3">
+    <div className="card" style={{ backgroundColor: '#fff', color: 'red' }}>
+      <div className="card-body">
+        <h6 className="mb-4">Total Credit</h6>
+        <div className="row d-flex align-items-center">
+          <div className="col-12">
+            <h3 className="f-w-300 d-flex align-items-center m-b-0">
+              {loading.details ? 'Loading...' : currency.format(totals.total_credit)}
+            </h3>
+          </div>
+        </div>
+        <div className="progress m-t-30" style={{ height: 7 }}>
+          <div
+            className="progress-bar bg-light"
+            role="progressbar"
+            style={{ width: '100%' }}
+            aria-valuenow={100}
+            aria-valuemin={0}
+            aria-valuemax={100}
+          />
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div className="col-md-3 col-sm-6 mb-3">
+    <div className="card" style={{ backgroundColor: '#fff', color: 'red' }}>
+      <div className="card-body">
+        <h6 className="mb-4">Total Transaction</h6>
+        <div className="row d-flex align-items-center">
+          <div className="col-12">
+            <h3 className="f-w-300 d-flex align-items-center m-b-0">
+              {loading.details ? 'Loading...' : totalTransactions}
+            </h3>
+          </div>
+        </div>
+        <div className="progress m-t-30" style={{ height: 7 }}>
+          <div
+            className="progress-bar bg-light"
+            role="progressbar"
+            style={{ width: '100%' }}
+            aria-valuenow={100}
+            aria-valuemin={0}
+            aria-valuemax={100}
+          />
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div className="col-md-3 col-sm-6 mb-3">
+    <div className="card" style={{ backgroundColor: '#fff', color: 'red' }}>
+      <div className="card-body">
+        <h6 className="mb-4">File Uploaded</h6>
+        <div className="row d-flex align-items-center">
+          <div className="col-12">
+            <h3 className="f-w-300 d-flex align-items-center m-b-0">
+              {loading.details ? 'Loading...' : totalSummaries}
+            </h3>
+          </div>
+        </div>
+        <div className="progress m-t-30" style={{ height: 7 }}>
+          <div
+            className="progress-bar bg-light"
+            role="progressbar"
+            style={{ width: '100%' }}
+            aria-valuenow={100}
+            aria-valuemin={0}
+            aria-valuemax={100}
+          />
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+  
+            </div>
+          </div>
+
+      
     </DashboardLayout>
   );
 };
+
 
 export default Dashboard;
