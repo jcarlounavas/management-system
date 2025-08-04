@@ -151,7 +151,7 @@ navigate('/dashboard');
                             const onlyNums = e.target.value.replace(/\D/g, '');
                             if (onlyNums.length <= 11) setContactNumber(onlyNums);
                           }}
-                          maxLength={10}
+                          maxLength={11}
                           pattern="9\d{10}"
                           title="Must start with 09 and be exactly 11 digits"
                           required

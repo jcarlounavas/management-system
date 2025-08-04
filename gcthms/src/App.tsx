@@ -11,6 +11,8 @@ import ViewPage from './components/ViewPage';
 import FormContact from './components/FormContact';
 import ContactTransactions from './components/ContactTransaction';
 import ProtectedRoute from './protect/ProtectedRoute';
+import ProfileSection from './dist/dashboard/ProfileSection';
+
 
 
   
@@ -93,6 +95,13 @@ const App: React.FC = () => {
         element={
           <ProtectedRoute>
             <ContactTransactions />
+          </ProtectedRoute>
+        }
+        />
+        <Route path='/profile'
+        element={
+          <ProtectedRoute>
+            <ProfileSection />
           </ProtectedRoute>
         }
         />

@@ -14,7 +14,7 @@ interface SidebarProps {
 
 
 const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children }) => {
-  const [isSidebarHidden, setIsSidebarHidden] = useState(false);
+  const [isSidebarHidden, setIsSidebarHidden] = useState(true);
 const toggleSidebar = () => setIsSidebarHidden(prev => !prev);
 
 

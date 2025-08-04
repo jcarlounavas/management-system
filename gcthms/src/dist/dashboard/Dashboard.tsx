@@ -13,22 +13,41 @@ interface Totals {
   total_debit: number;
   total_credit: number;
 }
+interface Contacts {
+  contact_id: number;
+  contact_name: string;
+  contact_number: string;
+  total_transactions: number;
+  credit: number;
+  debit: number;
+  total_debit: number;
+  total_credit: number;
+
+}
+
+
 
 const Dashboard: React.FC = () => {
   const [summaries, setSummaries] = useState<Summary[]>([]);
   const [summaryId, setSummaryId] = useState<number | null>(null);
   const [totals, setTotals] = useState<Totals>({ total_debit: 0, total_credit: 0 });
+  const [totalDebit, setTotalDebit] = useState(0);
+  const [totalCredit, setTotalCredit] = useState(0);
   const [totalTransactions, setTotalTransactions] = useState(0);
   const [totalSummaries, setTotalSummaries] = useState(0);
   const [loading, setLoading] = useState({ summaries: true, details: false });
   const [error, setError] = useState('');
   const navigate = useNavigate();
+  const [contacts, setContacts] = useState<Contacts[]>([]);
+
 
   const currency = new Intl.NumberFormat('en-PH', {
     style: 'currency',
     currency: 'PHP',
     maximumFractionDigits: 2,
   });
+  const token = localStorage.getItem('token');
+  const userId = localStorage.getItem('user_id');
 
   // Redirect to login if no token
   useEffect(() => {
@@ -44,17 +63,17 @@ const Dashboard: React.FC = () => {
       setError('');
 
       try {
-        const token = localStorage.getItem('token');
-        if (!token) throw new Error('No token');
 
-        const [summaryRes, countRes] = await Promise.all([
+        const [summaryRes, countRes,] = await Promise.all([
           fetch('http://localhost:3001/api/summary', {
             headers: { Authorization: `Bearer ${token}` },
           }),
           fetch('http://localhost:3001/api/summary/count', {
             headers: { Authorization: `Bearer ${token}` },
           }),
+
         ]);
+        
 
         if (!summaryRes.ok || !countRes.ok) {
           throw new Error('Failed to fetch summary data');
@@ -62,10 +81,12 @@ const Dashboard: React.FC = () => {
 
         const summaryData = await summaryRes.json();
         const countData = await countRes.json();
+       
 
         setSummaries(summaryData);
         setSummaryId(summaryData[0]?.id || null);
         setTotalSummaries(countData?.total_transactions || 0);
+       
       } catch (err) {
         console.error(err);
         setError('⚠️ Could not load dashboard data. Check API or database.');
@@ -122,6 +143,43 @@ const Dashboard: React.FC = () => {
 
     fetchSummaryDetails();
   }, [summaryId]);
+
+
+  //Fetch Top Contacts
+  useEffect(() => {
+  const fetchTopContacts = async () => {
+    try {
+      if (!token || !userId) return;
+
+      const res = await fetch(`http://localhost:3001/api/summary/top-contacts?user_id=${userId}`, {
+        
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+      const data = await res.json();
+      setContacts(data);
+      console.log(data);
+      const total_debit = data.reduce((sum: number, contact: Contacts) => sum + Number(contact.total_debit), 0);
+      const total_credit = data.reduce((sum: number, contact: Contacts) => sum + Number(contact.total_credit), 0);
+
+
+      setTotalDebit(total_debit);
+      setTotalCredit(total_credit);
+
+
+      if (!res.ok) {
+        throw new Error('Failed to fetch top contacts');
+      }
+
+    } catch (error) {
+      console.error('Error fetching top contacts:', error);
+    }
+  };
+
+  fetchTopContacts();
+}, []);
+
 
   if (loading.summaries) {
     return <div className="text-center mt-5">Loading dashboard...</div>;
@@ -255,16 +313,6 @@ const Dashboard: React.FC = () => {
             </h3>
           </div>
         </div>
-        <div className="progress m-t-30" style={{ height: 7 }}>
-          <div
-            className="progress-bar bg-primary"
-            role="progressbar"
-            style={{ width: '100%' }}
-            aria-valuenow={100}
-            aria-valuemin={0}
-            aria-valuemax={100}
-          />
-        </div>
       </div>
     </div>
   </div>
@@ -279,176 +327,46 @@ const Dashboard: React.FC = () => {
 </div>
 
   {/* Contact Card 1 */}
-  <div className="col-md-6 col-xl-4">
-    <div className="card card-social">
-      <div className="card-body border-bottom">
-        <div className="row align-items-center justify-content-center">
-          <div className="col-auto">
-             <AccountCircleIcon style={{ fontSize: 100, color: '#3f51b5' }} />
-            <i className="ti ti-user text-primary" style={{ fontSize: 36 }}></i>
-          </div>
-          <div className="col text-end">
-            <h4 className="mb-1">Patrick Cords</h4>
-            <span className="text-muted">Acct #: 1234567890</span>
-            <h5 className="text-primary mt-2 mb-0">Total Transactions: 1,234</h5>
-          </div>
-        </div>
-      </div>
-      <div className="card-body">
-        <div className="row align-items-center justify-content-center card-active">
-          <div className="col-6">
-            <h6 className="text-center mb-2">
-              <span className="text-muted me-1">Debit:</span> ₱25,000
-            </h6>
-            <div className="progress">
-              <div
-                className="progress-bar bg-success"
-                role="progressbar"
-                style={{ width: '70%', height: '6px' }}
-                aria-valuenow={70}
-                aria-valuemin={0}
-                aria-valuemax={100}
-              ></div>
+      {contacts.map((contact, index) => (
+        <div className="col-md-6 col-xl-4" key={contact.contact_id || index}>
+          <div className="card card-social">
+            <div className="card-body border-bottom">
+              <div className="row align-items-center justify-content-center">
+                <div className="col-auto">
+                  <AccountCircleIcon style={{ fontSize: 80, color: '#3f51b5' }} />
+                </div>
+                <div className="col text-end">
+                  <h4 className="mb-1">{contact.contact_name}</h4>
+                  <span className="text-muted">Account #: {contact.contact_number}</span>
+                  <h6 className="text-primary mt-2 mb-0">
+                    Total Transactions: {contact.total_transactions?.toLocaleString()}
+                  </h6>
+                </div>
+              </div>
             </div>
-          </div>
-          <div className="col-6">
-            <h6 className="text-center mb-2">
-              <span className="text-muted me-1">Credit:</span> ₱18,500
-            </h6>
-            <div className="progress">
-              <div
-                className="progress-bar bg-danger"
-                role="progressbar"
-                style={{ width: '50%', height: '6px' }}
-                aria-valuenow={50}
-                aria-valuemin={0}
-                aria-valuemax={100}
-              ></div>
-            </div>
-          </div>
-        </div>
-        <div className="card-footer text-center border-top">
-  <button className="badge me-2 bg-brand-color-2 text-white f-12">View More</button>
-</div>
-      </div>
-    </div>
-  </div>
 
-  {/* Contact Card 2 */}
-  <div className="col-md-6 col-xl-4">
-    <div className="card card-social">
-      <div className="card-body border-bottom">
-        <div className="row align-items-center justify-content-center">
-          <div className="col-auto">
-            <AccountCircleIcon style={{ fontSize: 100, color: '#3f51b5' }} />
-            <i className="ti ti-user text-primary" style={{ fontSize: 36 }}></i>
-          </div>
-          <div className="col text-end">
-            <h4 className="mb-1">Kyle D. Vinkoy</h4>
-            <span className="text-muted">Acct #: 9876543210</span>
-            <h5 className="text-primary mt-2 mb-0">Total Transactions: 980</h5>
-          </div>
-        </div>
-      </div>
-      <div className="card-body">
-        <div className="row align-items-center justify-content-center card-active">
-          <div className="col-6">
-            <h6 className="text-center mb-2">
-              <span className="text-muted me-1">Debit:</span> ₱15,200
-            </h6>
-            <div className="progress">
-              <div
-                className="progress-bar bg-success"
-                role="progressbar"
-                style={{ width: '55%', height: '6px' }}
-                aria-valuenow={55}
-                aria-valuemin={0}
-                aria-valuemax={100}
-              ></div>
-            </div>
-          </div>
-          <div className="col-6">
-            <h6 className="text-center mb-2">
-              <span className="text-muted me-1">Credit:</span> ₱12,000
-            </h6>
-            <div className="progress">
-              <div
-                className="progress-bar bg-danger"
-                role="progressbar"
-                style={{ width: '40%', height: '6px' }}
-                aria-valuenow={40}
-                aria-valuemin={0}
-                aria-valuemax={100}
-              ></div>
-            </div>
-          </div>
-        </div>
-        <div className="card-footer text-center border-top">
-  <button className="badge me-2 bg-brand-color-2 text-white f-12">View More</button>
-</div>
-      </div>
-    </div>
-    
-  </div>
+            <div className="card-body">
+              <div className="row align-items-center justify-content-center card-active">
+                <div className="col-6">
+                  <h6 className="text-center mb-2">
+                    <span className="text-muted me-1">Total Debit: </span> {currency.format(totalDebit)}
+                  </h6>
+                </div>
 
-  {/* Contact Card 3 */}
-  <div className="col-md-6 col-xl-4">
-    <div className="card card-social">
-      <div className="card-body border-bottom">
-        <div className="row align-items-center justify-content-center">
-          <div className="col-auto">
-            <AccountCircleIcon style={{ fontSize: 100, color: '#3f51b5' }} />
-            <i className="ti ti-user text-primary" style={{ fontSize: 36 }}></i>
-          </div>
-          <div className="col text-end">
-            <h4 className="mb-1">JC Navas</h4>
-            <span className="text-muted">Acct #: 1122334455</span>
-            <h5 className="text-primary mt-2 mb-0">Total Transactions: 875</h5>
-          </div>
-        </div>
-      </div>
-      <div className="card-body">
-        <div className="row align-items-center justify-content-center card-active">
-          <div className="col-6">
-            <h6 className="text-center mb-2">
-              <span className="text-muted me-1">Debit:</span> ₱19,800
-            </h6>
-            <div className="progress">
-              <div
-                className="progress-bar bg-success"
-                role="progressbar"
-                style={{ width: '65%', height: '6px' }}
-                aria-valuenow={65}
-                aria-valuemin={0}
-                aria-valuemax={100}
-              ></div>
-            </div>
-          </div>
-          <div className="col-6">
-            <h6 className="text-center mb-2">
-              <span className="text-muted me-1">Credit:</span> ₱14,600
-            </h6>
-            <div className="progress">
-              <div
-                className="progress-bar bg-danger"
-                role="progressbar"
-                style={{ width: '48%', height: '6px' }}
-                aria-valuenow={48}
-                aria-valuemin={0}
-                aria-valuemax={100}
-              ></div>
+                <div className="col-6">
+                  <h6 className="text-center mb-2">
+                    <span className="text-muted me-1">Total Credit:</span> {currency.format(totalCredit)}
+                  </h6>
+                </div>
+              </div>
+
             </div>
           </div>
         </div>
-        <div className="card-footer text-center border-top">
-    <button className="badge me-2 bg-brand-color-2 text-white f-12">View More</button>
-  </div>
-      </div>
-      
-    </div>
-  </div>
+      ))}
+
   
-</div>
+              </div>
 
             </div>
           </div>
