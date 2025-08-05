@@ -1,5 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
+import * as XLSX from 'xlsx';
+import { saveAs } from 'file-saver';
 
 interface Transaction {
   tx_date: string;
@@ -31,11 +33,12 @@ const ContactTransactions: React.FC = () => {
         const res = await fetch(`http://localhost:3001/api/contacts/${id}/transactions`);
         const data = await res.json();
         setTransactions(data.transactions);
+        console.log(data.transactions.length);
+
 
         if (data.transactions.length > 0) {
           setContactName(data.transactions[0].contact_name);
 
-          // Default: filter all June transactions if no filters are selected
           if (!startDate && !endDate) {
             const juneStart = new Date('2025-06-01');
             const juneEnd = new Date('2025-06-30');
@@ -51,21 +54,44 @@ const ContactTransactions: React.FC = () => {
     if (id) fetchTransactions();
   }, [id]);
 
- const filteredTransactions = transactions.filter(tx => {
-  const txDate = new Date(tx.tx_date);
-  txDate.setHours(0, 0, 0, 0);
+  const filteredTransactions = transactions.filter(tx => {
+    if (!tx.tx_date) {
+  console.warn('Missing tx_date for:', tx);
+  return false;
+}
+    const txDate = new Date(tx.tx_date);
+    txDate.setHours(0, 0, 0, 0);
 
-  const start = startDate ? new Date(startDate) : null;
-  const end = endDate ? new Date(endDate) : null;
+    const start = startDate ? new Date(startDate) : null;
+    const end = endDate ? new Date(endDate) : null;
 
-  if (start) start.setHours(0, 0, 0, 0);
-  if (end) end.setHours(23, 59, 59, 999);
+    if (start) start.setHours(0, 0, 0, 0);
+    if (end) end.setHours(23, 59, 59, 999);
 
-  return (!start || txDate >= start) && (!end || txDate <= end);
-});
+    return (!start || txDate >= start) && (!end || txDate <= end);
+  });
 
   const totalDebit = filteredTransactions.reduce((sum, tx) => sum + Number(tx.debit || 0), 0);
   const totalCredit = filteredTransactions.reduce((sum, tx) => sum + Number(tx.credit || 0), 0);
+
+  const handleExportToExcel = () => {
+    
+    const dataToExport = filteredTransactions.map(tx => ({
+      Date: new Date(tx.tx_date).toLocaleDateString('en-US'),
+      Description: tx.description_with_names,
+      'Reference No': tx.reference_no,
+      Debit: tx.debit,
+      Credit: tx.credit,
+    }));
+
+    const ws = XLSX.utils.json_to_sheet(dataToExport);
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, 'Transactions');
+
+    const excelBuffer = XLSX.write(wb, { bookType: 'xlsx', type: 'array' });
+    const blob = new Blob([excelBuffer], { type: 'application/octet-stream' });
+    saveAs(blob, `Transactions_${contactName || 'Contact'}.xlsx`);
+  };
 
   return (
     <div className="container mt-4">
@@ -90,12 +116,16 @@ const ContactTransactions: React.FC = () => {
             className="form-control"
           />
         </div>
+        <div className="align-self-end">
+          <button className="btn btn-success" onClick={handleExportToExcel}>Export to Excel</button>
+        </div>
       </div>
 
       <div className="table-responsive">
         <table className="table table-bordered">
           <thead className="table-light">
             <tr>
+              <th className='text-center'>No.</th>
               <th className="text-center">Date</th>
               <th className="text-center">Description</th>
               <th className="text-center">Reference No</th>
@@ -104,8 +134,10 @@ const ContactTransactions: React.FC = () => {
             </tr>
           </thead>
           <tbody>
+            
             {filteredTransactions.map((tx, idx) => (
               <tr key={idx}>
+                <td className="text-center">{idx + 1}</td>
                 <td className="text-center">
                   {new Date(tx.tx_date).toLocaleDateString('en-US')}
                 </td>
@@ -123,6 +155,7 @@ const ContactTransactions: React.FC = () => {
               <td colSpan={3}>Total</td>
               <td className="text-end">{currency.format(totalDebit)}</td>
               <td className="text-end">{currency.format(totalCredit)}</td>
+
             </tr>
           </tbody>
         </table>

@@ -155,7 +155,7 @@ app.post('/api/summary', async (req, res) => {
 
 
 
-// GET: All Transactions (optional date filtering)
+// GET: All Transactions (with date filtering)
 app.get('/api/transactions', async (req, res) => {
   const { startDate, endDate, user_id } = req.query;
 
@@ -280,13 +280,12 @@ app.get('/api/summary/top-contacts', async (req, res) => {
         c.id AS contact_id,
         c.name AS contact_name,
         c.contact_number,
-        COUNT(t.id) AS total_transactions,
-        COALESCE(SUM(CASE WHEN t.sender = c.contact_number THEN t.debit ELSE 0 END), 0) AS total_debit,
-        COALESCE(SUM(CASE WHEN t.receiver = c.contact_number THEN t.credit ELSE 0 END), 0) AS total_credit
+        COUNT(*) AS total_transactions,
+        SUM(t.debit) AS total_debit,
+        SUM(t.credit) AS total_credit
       FROM contacts c
-      LEFT JOIN transactions t
-        ON (t.sender = c.contact_number OR t.receiver = c.contact_number)
-      WHERE c.user_id = ?
+      JOIN transactions t
+        ON c.contact_number = t.sender OR c.contact_number = t.receiver
       GROUP BY c.id, c.name, c.contact_number
       ORDER BY total_transactions DESC
       LIMIT 3
@@ -294,7 +293,7 @@ app.get('/api/summary/top-contacts', async (req, res) => {
 
     res.json(rows);
   } catch (err) {
-    console.error('❌ Error fetching top contacts:', err);
+    console.error('Error fetching top contacts:', err);
     res.status(500).json({ error: 'Failed to fetch top contacts' });
   }
 });
@@ -428,30 +427,31 @@ app.get('/api/contacts/:id/transactions', async (req, res) => {
 
   const transactionSql = `
     SELECT 
-      t.*,
-      c.id AS contact_id,
-      c.name AS contact_name,
-      CASE 
-        WHEN t.sender = c.contact_number THEN 'Sender'
-        WHEN t.receiver = c.contact_number THEN 'Receiver'
-      END AS role,
-      sender_contact.name AS sender_name,
-      receiver_contact.name AS receiver_name,
-      CONCAT(
-        'Transfer from ',
-        COALESCE(sender_contact.name, t.sender),
-        ' to ',
-        COALESCE(receiver_contact.name, t.receiver)
-      ) AS description_with_names
-    FROM transactions t
-    JOIN contacts c
-      ON t.sender = c.contact_number OR t.receiver = c.contact_number
-    LEFT JOIN contacts sender_contact
-      ON t.sender = sender_contact.contact_number
-    LEFT JOIN contacts receiver_contact
-      ON t.receiver = receiver_contact.contact_number
-    WHERE c.id = ?
-    ORDER BY t.tx_date ASC
+  t.*,
+  c.id AS contact_id,
+  c.name AS contact_name,
+  CASE 
+    WHEN t.sender = c.contact_number THEN 'Sender'
+    WHEN t.receiver = c.contact_number THEN 'Receiver'
+  END AS role,
+  sender_contact.name AS sender_name,
+  receiver_contact.name AS receiver_name,
+  CONCAT(
+    'Transfer from ',
+    COALESCE(sender_contact.name, t.sender),
+    ' to ',
+    COALESCE(receiver_contact.name, t.receiver)
+  ) AS description_with_names
+FROM transactions t
+LEFT JOIN contacts sender_contact
+  ON t.sender = sender_contact.contact_number
+LEFT JOIN contacts receiver_contact
+  ON t.receiver = receiver_contact.contact_number
+JOIN contacts c
+  ON (c.contact_number = t.sender OR c.contact_number = t.receiver)
+WHERE c.id = ?
+ORDER BY t.tx_date ASC;
+
   `;
 
   const totalsSql = `
@@ -474,6 +474,8 @@ app.get('/api/contacts/:id/transactions', async (req, res) => {
       transactions,
       totals,
     });
+    console.log(totals);
+    console.log(transactions);
   } catch (err) {
     console.error('Error fetching contact transactions:', err);
     res.status(500).json({ error: 'Failed to retrieve transactions' });
