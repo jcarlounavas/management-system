@@ -14,6 +14,7 @@ interface SidebarProps {
 
 
 const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children }) => {
+
   const [isSidebarHidden, setIsSidebarHidden] = useState<boolean>(() => {
     try {
     const saved = localStorage.getItem("sidebarHidden");

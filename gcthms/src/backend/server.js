@@ -35,7 +35,7 @@ app.post('/api/register', async (req, res) => {
     res.status(500).json({ error: 'Database error' });
   }
 });
-
+//Log In
 app.post('/api/login', async (req, res) => {
   const { email, password } = req.body;
 
@@ -186,7 +186,7 @@ app.get('/api/transactions', async (req, res) => {
 });
 
 
-//GET Summary
+//GET: Summary Transactions
 app.get('/api/summary/all', async (req, res) => {
   const user_id = req.query.user_id;
 
@@ -219,7 +219,7 @@ app.get('/api/summary/all', async (req, res) => {
 
 
 
-//Total Summary Transactions
+//GET: Total Summary Transactions (For Dashboard Display)
 app.get('/api/summary/:id/totals', async (req, res) => {
   const summaryId = req.params.id;
 
@@ -245,6 +245,7 @@ app.get('/api/summary/:id/totals', async (req, res) => {
   }
 });
 
+//GET: Total Summary Transactions (For Dashboard Display)
 app.get('/api/summary', async (req, res) => {
   try {
     const [summaries] = await db.query(`SELECT id, file_name FROM summary ORDER BY id DESC`);
@@ -255,6 +256,7 @@ app.get('/api/summary', async (req, res) => {
   }
 });
 
+//GET: Total Summary Transactions (For Dashboard Display)
 app.get('/api/summary/count', async (req, res) => {
   try {
     const [rows] = await db.query('SELECT COUNT(*) AS total_transactions FROM summary');
@@ -264,6 +266,40 @@ app.get('/api/summary/count', async (req, res) => {
     res.status(500).json({ error: 'Failed to fetch summary count' });
   }
 });
+
+//GET: Total Summary Transactions (For Dashboard Display) - Top Contacts
+app.get('/api/summary/top-contacts', async (req, res) => {
+  const user_id = req.query.user_id;
+  if (!user_id) {
+    return res.status(400).json({ error: 'Missing user_id' });
+  }
+
+  try {
+    const [rows] = await db.query(`
+      SELECT 
+        c.id AS contact_id,
+        c.name AS contact_name,
+        c.contact_number,
+        COUNT(t.id) AS total_transactions,
+        COALESCE(SUM(CASE WHEN t.sender = c.contact_number THEN t.debit ELSE 0 END), 0) AS total_debit,
+        COALESCE(SUM(CASE WHEN t.receiver = c.contact_number THEN t.credit ELSE 0 END), 0) AS total_credit
+      FROM contacts c
+      LEFT JOIN transactions t
+        ON (t.sender = c.contact_number OR t.receiver = c.contact_number)
+      WHERE c.user_id = ?
+      GROUP BY c.id, c.name, c.contact_number
+      ORDER BY total_transactions DESC
+      LIMIT 3
+    `, [user_id]);
+
+    res.json(rows);
+  } catch (err) {
+    console.error('❌ Error fetching top contacts:', err);
+    res.status(500).json({ error: 'Failed to fetch top contacts' });
+  }
+});
+
+
 
 // GET: Transactions by Summary ID
 app.get('/api/summary/:id/transactions', async (req, res) => {
@@ -284,7 +320,7 @@ app.get('/api/summary/:id/transactions', async (req, res) => {
   }
 
 });
-// GET /api/summary/:id/details
+
 // Get specific summary details by ID
 app.get('/api/summary/:id/details', async (req, res) => {
   const summaryId = req.params.id;
@@ -344,7 +380,6 @@ app.get('/api/summary/:id/details', async (req, res) => {
   }
 });
 
-
 //Inserting Contacts
 app.post('/api/contacts', async (req, res) => {
   const { name, contactNumber, user_id } = req.body;
@@ -367,7 +402,6 @@ app.post('/api/contacts', async (req, res) => {
   }
 });
 
-
 //Extracting Contacts
 app.get('/api/contacts', async (req, res) => {
   const user_id = req.query.user_id;
@@ -388,9 +422,7 @@ app.get('/api/contacts', async (req, res) => {
   }
 });
 
-
-
-//Transactions of every contacts
+//Extracting Transactions of every contacts
 app.get('/api/contacts/:id/transactions', async (req, res) => {
   const { id } = req.params;
 
@@ -447,9 +479,6 @@ app.get('/api/contacts/:id/transactions', async (req, res) => {
     res.status(500).json({ error: 'Failed to retrieve transactions' });
   }
 });
-
-
-
 
 //Deletion of Summary Transactions.
 app.delete('/api/summary/:id', async (req, res) => {
