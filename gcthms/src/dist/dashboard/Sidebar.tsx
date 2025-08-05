@@ -16,6 +16,8 @@ const Sidebar: React.FC<SidebarProps> = ({ isSidebarHidden }) => {
   const handleLogout = () => {
     localStorage.removeItem('token');
     localStorage.removeItem('user');
+    localStorage.removeItem('sidebarHidden');
+    localStorage.removeItem('sidebarInitialized');
     navigate('/');
   };
 

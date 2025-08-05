@@ -12,17 +12,13 @@ interface Summary {
 interface Totals {
   total_debit: number;
   total_credit: number;
-}
-interface Contacts {
+}interface Contacts {
   contact_id: number;
   contact_name: string;
   contact_number: string;
   total_transactions: number;
-  credit: number;
-  debit: number;
   total_debit: number;
   total_credit: number;
-
 }
 
 
@@ -146,39 +142,41 @@ const Dashboard: React.FC = () => {
 
 
   //Fetch Top Contacts
-  useEffect(() => {
+useEffect(() => {
   const fetchTopContacts = async () => {
     try {
       if (!token || !userId) return;
 
       const res = await fetch(`http://localhost:3001/api/summary/top-contacts?user_id=${userId}`, {
-        
         headers: {
-          Authorization: `Bearer ${token}`,
+          Authorization: `Bearer ${token}`, // if your backend validates JWT
         },
       });
-      const data = await res.json();
-      setContacts(data);
-      console.log(data);
-      const total_debit = data.reduce((sum: number, contact: Contacts) => sum + Number(contact.total_debit), 0);
-      const total_credit = data.reduce((sum: number, contact: Contacts) => sum + Number(contact.total_credit), 0);
-
-
-      setTotalDebit(total_debit);
-      setTotalCredit(total_credit);
-
 
       if (!res.ok) {
         throw new Error('Failed to fetch top contacts');
       }
 
+      const data: Contacts[] = await res.json(); // ensure correct typing
+      console.log(data); // helpful for debugging
+
+      setContacts(data);
+
+    const total_debit = data.reduce((sum, contact) => sum + Number(contact.total_debit ?? 0), 0);
+    const total_credit = data.reduce((sum, contact) => sum + Number(contact.total_credit ?? 0), 0);
+
+
+      setTotalDebit(total_debit);
+      setTotalCredit(total_credit);
     } catch (error) {
       console.error('Error fetching top contacts:', error);
     }
   };
 
   fetchTopContacts();
-}, []);
+}, [token, userId]); // include dependencies for reliability
+
+
 
 
   if (loading.summaries) {
@@ -327,8 +325,9 @@ const Dashboard: React.FC = () => {
 </div>
 
   {/* Contact Card 1 */}
+      <div className="contact-card-row">
       {contacts.map((contact, index) => (
-        <div className="col-md-6 col-xl-4" key={contact.contact_id || index}>
+        <div className="contact-card card" key={contact.contact_id || index}>
           <div className="card card-social">
             <div className="card-body border-bottom">
               <div className="row align-items-center justify-content-center">
@@ -349,13 +348,13 @@ const Dashboard: React.FC = () => {
               <div className="row align-items-center justify-content-center card-active">
                 <div className="col-6">
                   <h6 className="text-center mb-2">
-                    <span className="text-muted me-1">Total Debit: </span> {currency.format(totalDebit)}
+                    <span className="text-muted me-1">Total Debit: </span> {currency.format(contact.total_debit)}
                   </h6>
                 </div>
 
                 <div className="col-6">
                   <h6 className="text-center mb-2">
-                    <span className="text-muted me-1">Total Credit:</span> {currency.format(totalCredit)}
+                    <span className="text-muted me-1">Total Credit:</span> {currency.format(contact.total_credit)}
                   </h6>
                 </div>
               </div>
@@ -367,7 +366,7 @@ const Dashboard: React.FC = () => {
 
   
               </div>
-
+              </div>
             </div>
           </div>
 

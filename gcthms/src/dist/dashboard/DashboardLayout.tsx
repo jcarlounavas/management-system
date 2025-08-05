@@ -26,7 +26,7 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children }) => {
       return true; // collapsed
     }
 
-    return saved !== null ? JSON.parse(saved) : false; // default to expanded
+    return saved !== null ? JSON.parse(saved) : true; // default to expanded
   } catch (e: unknown) {
     console.warn('Error reading sidebarHidden from localStorage:', e);
     return true;
