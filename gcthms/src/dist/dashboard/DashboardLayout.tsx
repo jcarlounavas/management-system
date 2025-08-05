@@ -14,9 +14,30 @@ interface SidebarProps {
 
 
 const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children }) => {
-  const [isSidebarHidden, setIsSidebarHidden] = useState(false);
-const toggleSidebar = () => setIsSidebarHidden(prev => !prev);
+  const [isSidebarHidden, setIsSidebarHidden] = useState<boolean>(() => {
+    try {
+    const saved = localStorage.getItem("sidebarHidden");
+    const initialized = localStorage.getItem("sidebarInitialized");
 
+    // First time loading after login
+    if (!initialized) {
+      localStorage.setItem("sidebarInitialized", "true");
+      return true; // collapsed
+    }
+
+    return saved !== null ? JSON.parse(saved) : false; // default to expanded
+  } catch (e: unknown) {
+    console.warn('Error reading sidebarHidden from localStorage:', e);
+    return true;
+  }
+});
+
+const toggleSidebar = () => setIsSidebarHidden((prev: boolean) => !prev);
+
+React.useEffect(() => {
+  console.log("Saving sidebarHidden:", isSidebarHidden);
+  localStorage.setItem("sidebarHidden", JSON.stringify(isSidebarHidden));
+}, [isSidebarHidden]);
 
   return (
     <div className="pc-wrapper d-flex">

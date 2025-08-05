@@ -1,6 +1,10 @@
 import React, { useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
-
+import jsPDF from 'jspdf';
+import PictureAsPdfIcon from '@mui/icons-material/PictureAsPdf';
+import FileDownloadIcon from '@mui/icons-material/FileDownload';
+import autoTable from 'jspdf-autotable';
+import * as XLSX from 'xlsx';
 interface Transaction {
   tx_date: string;
   description_with_names: string;
@@ -66,11 +70,120 @@ const ContactTransactions: React.FC = () => {
 
   const totalDebit = filteredTransactions.reduce((sum, tx) => sum + Number(tx.debit || 0), 0);
   const totalCredit = filteredTransactions.reduce((sum, tx) => sum + Number(tx.credit || 0), 0);
+  const formatDate = (dateString: string) => {
+  return new Date(dateString).toLocaleDateString('en-US');
+};
+
+const handleExportPDF = () => {
+  const fileName = prompt("Enter a file name for the PDF:", `Transactions_${contactName}`);
+  if (!fileName) return;
+
+  const doc = new jsPDF();
+
+  // Header
+  doc.setFontSize(12);
+  doc.setFont('helvetica', 'bold');
+  doc.text(`Transactions with ${contactName}`, 14, 15);
+  doc.setFontSize(10);
+  doc.setFont('helvetica', 'normal');
+  doc.text(`Date range: ${startDate || 'N/A'} to ${endDate || 'N/A'}`, 14, 22);
+
+  const tableColumn = ['Date', 'Description', 'Reference No', 'Debit', 'Credit'];
+  const tableRows = filteredTransactions.map(tx => [
+    formatDate(tx.tx_date),
+    tx.description_with_names,
+    tx.reference_no,
+    Number(tx.debit || 0).toFixed(2),
+    Number(tx.credit || 0).toFixed(2),
+  ]);
+
+  tableRows.push([
+    'TOTAL', '', '',
+    totalDebit.toFixed(2),
+    totalCredit.toFixed(2),
+  ]);
+
+  autoTable(doc, {
+    head: [tableColumn],
+    body: tableRows,
+    startY: 28,
+    theme: 'grid',
+    headStyles: {
+      fillColor: [52, 58, 64],
+      textColor: 255,
+      fontStyle: 'bold',
+      halign: 'center',
+      valign: 'middle',
+    },
+    bodyStyles: {
+      fontSize: 6,
+      cellPadding: 4,
+      valign: 'middle',
+    },
+    alternateRowStyles: {
+      fillColor: [248, 249, 250],
+    },
+    columnStyles: {
+      3: { halign: 'right' },
+      4: { halign: 'right' },
+    },
+    didDrawCell: (data) => {
+      if (data.row.index === tableRows.length - 1) {
+        data.cell.styles.fontStyle = 'bold';
+        data.cell.styles.fillColor = [233, 236, 239];
+      }
+    },
+  });
+
+  doc.save(`${fileName}.pdf`);
+};
+
+
+
+
+const handleExportExcel = () => {
+  const fileName = prompt("Enter a file name for the Excel file:", `Transactions_${contactName}`);
+  if (!fileName) return;
+
+  const data = filteredTransactions.map(tx => ({
+    Date: formatDate(tx.tx_date),
+    Description: tx.description_with_names,
+    'Reference No': tx.reference_no,
+    Debit: Number(tx.debit || 0),
+    Credit: Number(tx.credit || 0),
+  }));
+
+  data.push({
+    Date: 'TOTAL',
+    Description: '',
+    'Reference No': '',
+    Debit: totalDebit,
+    Credit: totalCredit,
+  });
+
+  const worksheet = XLSX.utils.json_to_sheet([]);
+  
+  // Add title and date range
+  XLSX.utils.sheet_add_aoa(worksheet, [
+    [`Transactions with ${contactName}`],
+    [`Date range: ${startDate || 'N/A'} to ${endDate || 'N/A'}`],
+    [],
+  ], { origin: "A1" });
+
+  // Add data after title
+  XLSX.utils.sheet_add_json(worksheet, data, { origin: -1, skipHeader: false });
+
+  const workbook = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(workbook, worksheet, 'Transactions');
+  XLSX.writeFile(workbook, `${fileName}.xlsx`);
+};
+
+
 
   return (
     <div className="container mt-4">
       <h2 className="mb-3">Transactions with {contactName}</h2>
-
+    <div className="d-flex justify-content-between align-items-end mb-3 flex-wrap gap-2">
       <div className="d-flex gap-2 mb-3">
         <div>
           <label>Start Date:</label>
@@ -90,6 +203,17 @@ const ContactTransactions: React.FC = () => {
             className="form-control"
           />
         </div>
+        </div>
+        <div className="mb-3 text-end">
+                          <button className="btn btn-outline-primary me-4" onClick={handleExportPDF}>
+                            <PictureAsPdfIcon style={{ fontSize: '1.2rem' }} />
+                            Export to PDF
+                            </button>
+                          <button className="btn btn-outline-success" onClick={handleExportExcel}>
+                            <FileDownloadIcon style={{ fontSize: '1.2rem' }} />
+                            Export to Excel
+                            </button>
+                        </div>
       </div>
 
       <div className="table-responsive">

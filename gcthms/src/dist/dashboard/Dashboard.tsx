@@ -166,9 +166,9 @@ const Dashboard: React.FC = () => {
 
           {/* Summary Cards */}
 
-          <div className="row">
+          <div className="row dashboard-hover-container">
   <div className="col-md-3 col-sm-6 mb-3">
-    <div className="card" style={{ backgroundColor: '#fff', color: 'red' }}>
+    <div className="card dashboard-hover-card">
       <div className="card-body">
         <h6 className="mb-4">Total Debit</h6>
         <div className="row d-flex align-items-center">
@@ -193,7 +193,7 @@ const Dashboard: React.FC = () => {
   </div>
 
   <div className="col-md-3 col-sm-6 mb-3">
-    <div className="card" style={{ backgroundColor: '#fff', color: 'red' }}>
+    <div className="card dashboard-hover-card">
       <div className="card-body">
         <h6 className="mb-4">Total Credit</h6>
         <div className="row d-flex align-items-center">
@@ -218,7 +218,7 @@ const Dashboard: React.FC = () => {
   </div>
 
   <div className="col-md-3 col-sm-6 mb-3">
-    <div className="card" style={{ backgroundColor: '#fff', color: 'red' }}>
+    <div className="card dashboard-hover-card">
       <div className="card-body">
         <h6 className="mb-4">Total Transaction</h6>
         <div className="row d-flex align-items-center">
@@ -244,7 +244,7 @@ const Dashboard: React.FC = () => {
   </div>
 
   <div className="col-md-3 col-sm-6 mb-3">
-    <div className="card" style={{ backgroundColor: '#fff', color: 'red' }}>
+    <div className="card dashboard-hover-card">
       <div className="card-body">
         <h6 className="mb-4">File Uploaded</h6>
         <div className="row d-flex align-items-center">
@@ -279,7 +279,8 @@ const Dashboard: React.FC = () => {
 </div>
 
   {/* Contact Card 1 */}
-  <div className="col-md-6 col-xl-4">
+  <div className="contact-card-row">
+  <div className="contact-card">
     <div className="card card-social">
       <div className="card-body border-bottom">
         <div className="row align-items-center justify-content-center">
@@ -335,7 +336,7 @@ const Dashboard: React.FC = () => {
   </div>
 
   {/* Contact Card 2 */}
-  <div className="col-md-6 col-xl-4">
+  <div className="contact-card">
     <div className="card card-social">
       <div className="card-body border-bottom">
         <div className="row align-items-center justify-content-center">
@@ -392,7 +393,7 @@ const Dashboard: React.FC = () => {
   </div>
 
   {/* Contact Card 3 */}
-  <div className="col-md-6 col-xl-4">
+  <div className="contact-card">
     <div className="card card-social">
       <div className="card-body border-bottom">
         <div className="row align-items-center justify-content-center">
@@ -447,7 +448,7 @@ const Dashboard: React.FC = () => {
       
     </div>
   </div>
-  
+  </div>
 </div>
 
             </div>
