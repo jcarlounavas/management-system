@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 
 const AuthForm: React.FC<{ mode: 'login' | 'register'; onAuth?: (user: any) => void }> = ({ mode, onAuth }) => {
@@ -11,6 +11,14 @@ const AuthForm: React.FC<{ mode: 'login' | 'register'; onAuth?: (user: any) => v
   const [success, setSuccess] = useState('');
   const navigate = useNavigate();
 
+  // Prevent user from going back to login if already logged in (token exists)
+  useEffect(() => {
+    const token = localStorage.getItem('token');
+    if (mode === 'login' && token) {
+      navigate('/dashboard', { replace: true });
+    }
+  }, [mode, navigate]);
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
@@ -18,7 +26,7 @@ const AuthForm: React.FC<{ mode: 'login' | 'register'; onAuth?: (user: any) => v
 
     const isEmailValid = /^[a-zA-Z0-9._%+-]+@(gmail|yahoo|outlook|hotmail)\.com$/.test(email);
     const isPasswordValid = password.length >= 6;
-    const isContactValid = /^9\d{9}$/.test(contactNumber.trim()); // Must start with 9 and be 10 digits
+    const isContactValid = /^09\d{9}$/.test(contactNumber.trim());
 
     if (mode === 'register') {
       if (!firstname.trim() || !lastname.trim()) {
@@ -27,7 +35,7 @@ const AuthForm: React.FC<{ mode: 'login' | 'register'; onAuth?: (user: any) => v
       }
 
       if (!isContactValid) {
-        setError('Contact number must start with 9 and be exactly 10 digits.');
+        setError('Contact number must start with 09 and be exactly 11 digits.');
         return;
       }
 
@@ -75,20 +83,17 @@ const AuthForm: React.FC<{ mode: 'login' | 'register'; onAuth?: (user: any) => v
         setPassword('');
         navigate('/');
       } else {
-   setSuccess('Login successful!');
-localStorage.setItem('user_id', data.user.id);
-localStorage.setItem('token', data.token);
-localStorage.setItem('user', JSON.stringify(data.user));
+        setSuccess('Login successful!');
+        localStorage.setItem('user_id', data.user.id);
+        localStorage.setItem('token', data.token);
+        localStorage.setItem('user', JSON.stringify(data.user));
 
-
-if (onAuth) onAuth(data.user);
-
-// Navigate after everything is stored
-navigate('/dashboard');
-}
+        if (onAuth) onAuth(data.user);
+        navigate('/dashboard');
+      }
 
     } catch (err: any) {
-      console.error(` ${mode} failed:`, err);
+      console.error(`${mode} failed:`, err);
       setError(err.message || 'Server error');
     }
   };
@@ -152,7 +157,7 @@ navigate('/dashboard');
                             if (onlyNums.length <= 11) setContactNumber(onlyNums);
                           }}
                           maxLength={11}
-                          pattern="9\d{10}"
+                          pattern="09\d{10}"
                           title="Must start with 09 and be exactly 11 digits"
                           required
                         />
@@ -163,28 +168,34 @@ navigate('/dashboard');
                     </>
                   )}
 
-                  <div className="mb-3">
-                    <input
-                        type="email"
-                        className="form-control"
-                        placeholder="Email Address"
-                        value={email}
-                        onChange={(e) => setEmail(e.target.value)}
-                        pattern="^[a-zA-Z0-9._%+-]+@(gmail|yahoo|outlook|hotmail)\.com$"
-                        title="Email must end with @gmail.com, @yahoo.com, @outlook.com, or @hotmail.com"
-                        required
-                    />
-                    </div>
-                  <div className="mb-3">
-                    <input
-                      type="password"
-                      className="form-control"
-                      placeholder="Password"
-                      value={password}
-                      onChange={(e) => setPassword(e.target.value)}
-                      required
-                    />
-                  </div>
+                  <div className="form-group mb-3">
+                  <label htmlFor="email" className="form-label">Email Address</label>
+                  <input
+                    id="email"
+                    type="email"
+                    className="form-control"
+                    placeholder="Enter your email"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    pattern="^[a-zA-Z0-9._%+-]+@(gmail|yahoo|outlook|hotmail)\.com$"
+                    title="Email must end with @gmail.com, @yahoo.com, @outlook.com, or @hotmail.com"
+                    required
+                  />
+                </div>
+
+                <div className="form-group mb-3">
+                  <label htmlFor="password" className="form-label">Password</label>
+                  <input
+                    id="password"
+                    type="password"
+                    className="form-control"
+                    placeholder="Enter your password"
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    required
+                  />
+                </div>
+
 
                   {mode === 'login' && (
                     <div className="d-flex mt-1 justify-content-between align-items-center">
@@ -210,14 +221,21 @@ navigate('/dashboard');
                   </div>
                 </form>
 
-                {mode === 'login' && (
-                  <div className="d-flex justify-content-between align-items-end mt-4">
-                    <h6 className="f-w-500 mb-0">Don't have an Account?</h6>
-                    <Link to="/register" className="link-primary">
-                      Register here
-                    </Link>
-                  </div>
-                )}
+                  {mode === 'login' ? (
+                    <div className="d-flex justify-content-between align-items-end mt-4">
+                      <h6 className="f-w-500 mb-0">Don't have an account?</h6>
+                      <Link to="/register" className="link-primary">
+                        Register here
+                      </Link>
+                    </div>
+                  ) : (
+                    <div className="d-flex justify-content-between align-items-end mt-4">
+                      <h6 className="f-w-500 mb-0">Already have an account?</h6>
+                      <Link to="/" className="link-primary">
+                        Login here
+                      </Link>
+                    </div>
+                  )}
 
                 {error && <p className="error text-danger text-center mt-3">{error}</p>}
                 {success && <p className="success text-success text-center mt-3">{success}</p>}
