@@ -43,8 +43,6 @@ const FileReader = ({ file, accNum }: { file: File | null, accNum: string }) => 
   const [error, setError] = useState<string>("");
   const [loading, setLoading] = useState(false);
   const [uploadedFile, setUploadedFile] = useState<File | null>(null);
-  const [transactions, setTransactions] = useState<Transaction[]>([]);
-
 
 
 

@@ -95,7 +95,7 @@ const ContactTransactions: React.FC = () => {
 
   return (
     <div className="container mt-4">
-      <h2 className="mb-3">Transactions with {contactName}</h2>
+      <h4 className="mb-3">Transactions with {contactName}</h4>
 
       <div className="d-flex gap-2 mb-3">
         <div>
@@ -152,6 +152,7 @@ const ContactTransactions: React.FC = () => {
               </tr>
             ))}
             <tr className="table-footer">
+              <td ></td>
               <td colSpan={3}>Total</td>
               <td className="text-end">{currency.format(totalDebit)}</td>
               <td className="text-end">{currency.format(totalCredit)}</td>

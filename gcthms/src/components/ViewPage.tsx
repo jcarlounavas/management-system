@@ -46,7 +46,7 @@ const ViewPage: React.FC = () => {
           <div className="page-header">
             <div className="page-block">
               <div className="card-header">
-                <h1 className="text-center">Summary View</h1>
+                <h3 className="text-center">Summary View</h3>
               </div>
             </div>
           </div>

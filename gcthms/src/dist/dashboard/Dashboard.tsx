@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import DashboardLayout from './DashboardLayout';
+import { Link } from 'react-router-dom';
 import InsertDriveFileIcon from '@mui/icons-material/InsertDriveFile';
 import CompareArrowsIcon from '@mui/icons-material/CompareArrows';
 import AccountCircleIcon from '@mui/icons-material/AccountCircle';
@@ -320,7 +321,9 @@ useEffect(() => {
 <div className="row mb-4">
   <div className="d-flex justify-content-between align-items-center mb-3">
     <h5 className="mb-0">Top Contacts</h5>
-  <button className="badge me-2 bg-brand-color-2 text-white f-1" >See All Contacts</button>
+  <div className="badge me-2 bg-brand-color-2 f-1" >
+    <Link to="/contacts" className=' text-white'> See All Contacts</Link>
+  </div>
   
 </div>
 
