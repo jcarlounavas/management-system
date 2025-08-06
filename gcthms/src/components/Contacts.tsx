@@ -5,7 +5,7 @@ import DashboardLayout from '../dist/dashboard/DashboardLayout';
 interface Contact {
   id: number;
   name: string;
-  phone: string;
+  contact_number: string;
   created_at: string;
   avatar: string;
 }
@@ -62,7 +62,7 @@ const Contacts: React.FC = () => {
                             <td></td>
                             <td>
                               <h6 className="mb-1">{contact.name}</h6>
-                              <p className="m-0">{contact.phone}</p>
+                              <p className="m-0">{contact.contact_number}</p>
                             </td>
                             <td className="text-center">
                               <Link

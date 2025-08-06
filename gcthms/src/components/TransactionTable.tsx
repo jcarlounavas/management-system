@@ -190,6 +190,7 @@ const TransactionTable: React.FC = () => {
 
   return (
     <DashboardLayout>
+      
       <div data-pc-preset="preset-1" data-pc-sidebar-caption="false" data-pc-direction="ltr" data-pc-theme="light">
         <div className="loader-bg">
           <div className="loader-track">
@@ -209,7 +210,7 @@ const TransactionTable: React.FC = () => {
 
             <div className="container">
               <div className="row mb-4">
-                <div className="col-md-4">
+                <div className="col-md-3">
                   <label className="form-label">Start Date</label>
                   <input type="date" className="form-control" value={startDate} onChange={(e) => setStartDate(e.target.value)} />
                 </div>
@@ -240,12 +241,12 @@ const TransactionTable: React.FC = () => {
                   <input type="text" className="form-control" placeholder={`Search ${searchCategory}`} value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} />
                 </div>
                 <div className="mb-3 text-end">
-                  <button className="btn btn-outline-primary me-4" onClick={handleExportPDF}>
-                    <PictureAsPdfIcon style={{ fontSize: '1.2rem' }} />
+                  <button className="btn btn-primary me-4" onClick={handleExportPDF}>
+                    <PictureAsPdfIcon style={{ fontSize: '1.2rem' }} className="me-1"/>
                     Export to PDF
                     </button>
-                  <button className="btn btn-outline-success" onClick={handleExportExcel}>
-                    <FileDownloadIcon style={{ fontSize: '1.2rem' }} />
+                  <button className="btn btn-success" onClick={handleExportExcel}>
+                    <FileDownloadIcon style={{ fontSize: '1.2rem' }} className="me-1"/>
                     Export to Excel
                     </button>
                 </div>

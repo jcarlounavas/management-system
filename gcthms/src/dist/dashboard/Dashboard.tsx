@@ -4,6 +4,7 @@ import DashboardLayout from './DashboardLayout';
 import InsertDriveFileIcon from '@mui/icons-material/InsertDriveFile';
 import CompareArrowsIcon from '@mui/icons-material/CompareArrows';
 import AccountCircleIcon from '@mui/icons-material/AccountCircle';
+import Link from '@mui/material/Link';
 interface Summary {
   id: number;
   file_name: string;
@@ -309,6 +310,9 @@ useEffect(() => {
               <InsertDriveFileIcon style={{ marginRight: '8px', fontSize: '32px', color: 'blue' }} />
               {loading.details ? 'Loading...' : totalSummaries}
             </h3>
+          <button>
+            View All Files
+          </button>
           </div>
         </div>
       </div>

@@ -201,11 +201,11 @@ const handleExportExcel = () => {
   };
 
   return (
-    <div className="container-fluid min-vh-100 d-flex flex-column p-4">
-     <div className="mb-3">
-      <h2 className="mb-1">Transactions with {contactName}</h2>
-      <p className="text-muted mb-0">Showing {filteredTransactions.length} transaction(s)</p>
-    </div>
+
+  <div className="container-fluid min-vh-100 d-flex flex-column p-4">
+    <div className="container mt-4">
+      <h4 className="mb-3 fs-2">Transactions with {contactName}</h4>
+
 
     <div className="w-100 d-flex justify-content-between align-items-end flex-wrap gap-2 mb-3">
     
@@ -235,7 +235,7 @@ const handleExportExcel = () => {
             <PictureAsPdfIcon style={{ fontSize: '1.2rem' }} className="me-1" />
                 Export to PDF
           </button>
-          <button className="btn btn-success" onClick={handleExportToExcel}>
+          <button className="btn btn-success" onClick={handleExportExcel}>
             <FileDownloadIcon style={{ fontSize: '1.2rem' }} className="me-1" />
             Export to Excel
           </button>
@@ -244,8 +244,8 @@ const handleExportExcel = () => {
   
 
       <div className="table-responsive">
-        <table className="table table-bordered">
-          <thead className="table-light">
+        <table className="table table-bordered table-striped">
+          <thead className="table-primary">
             <tr>
               <th className='text-center'>No.</th>
               <th className="text-center">Date</th>
@@ -274,6 +274,7 @@ const handleExportExcel = () => {
               </tr>
             ))}
             <tr className="table-footer">
+              <td ></td>
               <td colSpan={3}>Total</td>
               <td className="text-end">{currency.format(totalDebit)}</td>
               <td className="text-end">{currency.format(totalCredit)}</td>
@@ -282,6 +283,7 @@ const handleExportExcel = () => {
           </tbody>
         </table>
       </div>
+    </div>
     </div>
   );
 };

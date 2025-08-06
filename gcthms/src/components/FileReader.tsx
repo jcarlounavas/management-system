@@ -43,8 +43,6 @@ const FileReader = ({ file, accNum }: { file: File | null, accNum: string }) => 
   const [error, setError] = useState<string>("");
   const [loading, setLoading] = useState(false);
   const [uploadedFile, setUploadedFile] = useState<File | null>(null);
-  const [transactions, setTransactions] = useState<Transaction[]>([]);
-
 
 
 
@@ -327,8 +325,8 @@ const FileReader = ({ file, accNum }: { file: File | null, accNum: string }) => 
       </div>
     ) : summary?.pairSummaries && summary.pairSummaries.length > 0 ? (
       <div className="table-wrapper">
-        <table className="data-table">
-          <thead>
+        <table className="table table-bordered table-striped">
+          <thead className="table-primary">
             <tr>
               <th className='text-center'>Sender → Receiver</th>
               <th className='text-center'>Number of Transactions</th>
