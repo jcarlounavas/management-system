@@ -117,9 +117,6 @@ const AuthForm: React.FC<{ mode: 'login' | 'register'; onAuth?: (user: any) => v
             </div>
             <div className="card mb-0">
               <div className="card-body">
-                <div className="text-center">
-                  <img src="/assets/images/logo-dark.svg" alt="logo" />
-                </div>
                 <h4 className="text-center f-w-500 mt-4 mb-3">
                   {mode === 'login' ? 'Login' : 'Register'}
                 </h4>

@@ -4,7 +4,7 @@ import DashboardLayout from './DashboardLayout';
 import InsertDriveFileIcon from '@mui/icons-material/InsertDriveFile';
 import CompareArrowsIcon from '@mui/icons-material/CompareArrows';
 import AccountCircleIcon from '@mui/icons-material/AccountCircle';
-import Link from '@mui/material/Link';
+import Link from '@mui/material/Link';  
 interface Summary {
   id: number;
   file_name: string;
@@ -36,6 +36,7 @@ const Dashboard: React.FC = () => {
   const [error, setError] = useState('');
   const navigate = useNavigate();
   const [contacts, setContacts] = useState<Contacts[]>([]);
+  
 
 
   const currency = new Intl.NumberFormat('en-PH', {
@@ -62,10 +63,10 @@ const Dashboard: React.FC = () => {
       try {
 
         const [summaryRes, countRes,] = await Promise.all([
-          fetch('http://localhost:3001/api/summary', {
+          fetch(`http://localhost:3001/api/summary?user_id=${userId}`, {
             headers: { Authorization: `Bearer ${token}` },
           }),
-          fetch('http://localhost:3001/api/summary/count', {
+          fetch(`http://localhost:3001/api/summary/count?user_id=${userId}`, {
             headers: { Authorization: `Bearer ${token}` },
           }),
 
@@ -310,9 +311,6 @@ useEffect(() => {
               <InsertDriveFileIcon style={{ marginRight: '8px', fontSize: '32px', color: 'blue' }} />
               {loading.details ? 'Loading...' : totalSummaries}
             </h3>
-          <button>
-            View All Files
-          </button>
           </div>
         </div>
       </div>
@@ -324,7 +322,12 @@ useEffect(() => {
 <div className="row mb-4">
   <div className="d-flex justify-content-between align-items-center mb-3">
     <h5 className="mb-0">Top Contacts</h5>
-  <button className="badge me-2 bg-brand-color-2 text-white f-1" >See All Contacts</button>
+
+    <Link href="/contacts" underline="none" className="btn btn-primary text-white">
+      View All Contacts
+    </Link>
+
+
   
 </div>
 

@@ -1,21 +1,48 @@
-import React, { useState, ChangeEvent } from 'react';
+import React, { useState, ChangeEvent, useEffect } from 'react';
 import DashboardLayout from './DashboardLayout';
 
+interface Users{
+  firstname: String;
+  lastname: String;
+  email: String;
+  contact_number: String;
+}
+
+
+
 const ProfileSection: React.FC = () => {
-  const [formData, setFormData] = useState({
-    firstName: '',
-    lastName: '',
-    email: '',
-    contactNumber: ''
-  });
+const [user, setUser] = useState<Users | null>(null);
+
+useEffect(() => {
+  const fetchUserData = async () => {
+    const user_id = localStorage.getItem('user_id');
+    try {
+      const response = await fetch(`http://localhost:3001/api/users/profile?user_id=${user_id}`, {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${localStorage.getItem('token')}`,
+        },
+      });
+
+      if (!response.ok) {
+        throw new Error('Network response was not ok');
+      }
+
+      const userData: Users = await response.json();
+      setUser(userData);
+    } catch (error) {
+      console.error('Error fetching user data:', error);
+    }
+  };
+
+  fetchUserData();
+}, []);
 
   const [profileImage, setProfileImage] = useState<File | null>(null);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const { name, value } = e.target;
-    setFormData(prev => ({ ...prev, [name]: value }));
-  };
+
 
   const handleImageChange = (e: ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -30,9 +57,6 @@ const ProfileSection: React.FC = () => {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    console.log('Saved data:', formData);
-    console.log('Selected image:', profileImage);
-    
   };
 
   return (
@@ -88,61 +112,42 @@ const ProfileSection: React.FC = () => {
                   <div className="row">
                     <div className="col-sm-6 mb-3">
                       <label htmlFor="firstName" className="form-label">First Name</label>
-                      <input
-                        type="text"
-                        name="firstName"
-                        id="firstName"
-                        className="form-control"
-                        value={formData.firstName}
-                        onChange={handleChange}
-                        placeholder="First Name"
-                        required
-                      />
+                  <input
+                    type="text"
+                    name="firstName"
+                    className="form-control"
+                    value={String(user?.firstname ?? '')}
+                  />
                     </div>
                     <div className="col-sm-6 mb-3">
                       <label htmlFor="lastName" className="form-label">Last Name</label>
-                      <input
-                        type="text"
-                        name="lastName"
-                        id="lastName"
-                        className="form-control"
-                        value={formData.lastName}
-                        onChange={handleChange}
-                        placeholder="Last Name"
-                        required
-                      />
+                  <input
+                    type="text"
+                    name="firstName"
+                    className="form-control"
+                    value={String(user?.lastname ?? '')}
+                  />
                     </div>
                   </div>
 
                   <div className="mb-3">
                     <label htmlFor="email" className="form-label">Email Address</label>
                     <input
-                      type="email"
-                      name="email"
-                      id="email"
-                      className="form-control"
-                      value={formData.email}
-                      onChange={handleChange}
-                      placeholder="Email Address"
-                      required
-                    />
+                    type="text"
+                    name="firstName"
+                    className="form-control"
+                    value={String(user?.email ?? '')}
+                  />
                   </div>
 
                   <div className="mb-3">
-                    <label htmlFor="contactNumber" className="form-label">Contact Number</label>
-                    <input
-                      type="text"
-                      name="contactNumber"
-                      id="contactNumber"
-                      inputMode="numeric"
-                      maxLength={11}
-                      pattern="\d{11}"
-                      className="form-control"
-                      value={formData.contactNumber}
-                      onChange={handleChange}
-                      placeholder="Contact Number"
-                      required
-                    />
+                    <label htmlFor="contactNumber" className="form-label">Account Number</label>
+                  <input
+                    type="text"
+                    name="firstName"
+                    className="form-control"
+                    value={String(user?.contact_number ?? '')}
+                  />
                   </div>
 
                   <div className="text-center mt-4">

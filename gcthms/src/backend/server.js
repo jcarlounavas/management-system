@@ -153,6 +153,31 @@ app.post('/api/summary', async (req, res) => {
   }
 });
 
+// Get User Profile
+app.get('/api/users/profile', async (req, res) => {
+  const userId = req.query.user_id;
+  if (!userId) {
+    return res.status(400).json({ error: 'Missing user_id' });
+  }
+
+  try {
+    const [rows] = await db.query(
+      'SELECT id, firstname, lastname, email, contact_number FROM users WHERE id = ?',
+      [userId]
+    );
+
+    if (rows.length === 0) {
+      return res.status(404).json({ error: 'User not found' });
+    }
+
+    const user = rows[0];
+    res.json(user);
+  } catch (err) {
+    console.error('Error fetching user profile:', err);
+    res.status(500).json({ error: 'Failed to fetch user profile' });
+  }
+});
+
 
 
 // GET: All Transactions (with date filtering)
@@ -246,9 +271,10 @@ app.get('/api/summary/:id/totals', async (req, res) => {
 });
 
 //GET: Total Summary Transactions (For Dashboard Display)
-app.get('/api/summary', async (req, res) => {
+app.get('/api/summary/', async (req, res) => {
+  const user_id = req.query.user_id;
   try {
-    const [summaries] = await db.query(`SELECT id, file_name FROM summary ORDER BY id DESC`);
+    const [summaries] = await db.query(`SELECT id, file_name FROM summary WHERE user_id = ? ORDER BY id DESC`, [user_id]);
     res.json(summaries);
   } catch (err) {
     console.error('Error fetching summaries:', err);
@@ -258,9 +284,10 @@ app.get('/api/summary', async (req, res) => {
 
 //GET: Total Summary Transactions (For Dashboard Display)
 app.get('/api/summary/count', async (req, res) => {
+  const user_id = req.query.user_id;
   try {
-    const [rows] = await db.query('SELECT COUNT(*) AS total_transactions FROM summary');
-    res.json(rows[0]);  // returns { total_summaries: N }
+    const [rows] = await db.query('SELECT COUNT(*) AS total_transactions FROM summary WHERE user_id = ?', [user_id]);
+    res.json(rows[0]);
   } catch (err) {
     console.error('Error fetching summary count:', err);
     res.status(500).json({ error: 'Failed to fetch summary count' });
@@ -286,6 +313,7 @@ app.get('/api/summary/top-contacts', async (req, res) => {
       FROM contacts c
       JOIN transactions t
         ON c.contact_number = t.sender OR c.contact_number = t.receiver
+      WHERE c.user_id = ?
       GROUP BY c.id, c.name, c.contact_number
       ORDER BY total_transactions DESC
       LIMIT 3

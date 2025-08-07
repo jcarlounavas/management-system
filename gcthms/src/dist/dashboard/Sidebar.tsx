@@ -1,4 +1,5 @@
 import React from 'react';
+import { useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { Dashboard, Contacts, UploadFile, ListAlt } from '@mui/icons-material';
 import '../assets/css/Sidebar.css';
@@ -9,6 +10,8 @@ interface SidebarProps {
 
 const Sidebar: React.FC<SidebarProps> = ({ isSidebarHidden }) => {
   const location = useLocation();
+    const [profileImage, setProfileImage] = useState<File | null>(null);
+    const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const navigate = useNavigate();
 
   const isActive = (path: string) => location.pathname === path;
@@ -38,18 +41,21 @@ const Sidebar: React.FC<SidebarProps> = ({ isSidebarHidden }) => {
                   style={{ height: '100%', overflow: 'auto' }}
                 >
                   <div
-                    className="user-profile text-white py-4 px-3 d-flex flex-column align-items-center mb-4"
-                    style={{ cursor: 'pointer' }}
-                    onClick={() => alert('Profile clicked!')}
-                  >
-                    <img
-                      src="../UserAvatar.png"
-                      className="rounded-circle mb-2 shadow"
-                      width="100"
-                      height="100"
-                      alt="User Avatar"
-                      style={{ zIndex: 10, position: 'relative' }}
-                    />
+                    className="user-profile text-white py-4 px-3 d-flex flex-column align-items-center mb-4">
+                                          <div
+                        className="mx-auto d-flex align-items-center justify-content-center bg-light border rounded-circle overflow-hidden"
+                        style={{ width: '100px', height: '100px' }}
+                    >
+                        {previewUrl ? (
+                        <img
+                            src={previewUrl}
+                            alt="Profile"
+                            style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                        />
+                        ) : (
+                        <span className="text-muted" style={{ fontSize: '0.875rem' }}>No Photo</span>
+                        )}
+                    </div>
                     <div className="text-center">
                       <strong>{user?.name || user?.email || 'Guest'}</strong>
                     </div>
