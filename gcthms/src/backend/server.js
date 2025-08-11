@@ -1,12 +1,33 @@
 const express = require('express');
 const cors = require('cors');
 const bcrypt = require('bcryptjs');
-const db = require('./db'); // Your pool is defined here
+const multer = require('multer');
+const path = require('path');
+const fs = require('fs');
+const db = require('./db');
 const app = express();
 const PORT = 3001;
 
 app.use(cors());
 app.use(express.json());
+
+const uploadDir = path.join(__dirname, 'uploads/profile_images');
+if (!fs.existsSync(uploadDir)) {
+  fs.mkdirSync(uploadDir, { recursive: true });
+}
+
+// Multer storage config
+const storage = multer.diskStorage({
+  destination: (req, file, cb) => {
+    cb(null, uploadDir);
+  },
+  filename: (req, file, cb) => {
+    const ext = path.extname(file.originalname);
+    cb(null, `user_${req.query.user_id}${ext}`);
+  },
+});
+
+const upload = multer({ storage });
 
 
 // Register
@@ -153,7 +174,7 @@ app.post('/api/summary', async (req, res) => {
   }
 });
 
-// Get User Profile
+// ===== Get User Profile =====
 app.get('/api/users/profile', async (req, res) => {
   const userId = req.query.user_id;
   if (!userId) {
@@ -162,7 +183,7 @@ app.get('/api/users/profile', async (req, res) => {
 
   try {
     const [rows] = await db.query(
-      'SELECT id, firstname, lastname, email, contact_number FROM users WHERE id = ?',
+      'SELECT id, firstname, lastname, email, contact_number, image FROM users WHERE id = ?',
       [userId]
     );
 
@@ -170,13 +191,65 @@ app.get('/api/users/profile', async (req, res) => {
       return res.status(404).json({ error: 'User not found' });
     }
 
+    // Add full URL for image if exists
     const user = rows[0];
+    if (user.image) {
+  user.profile_image_url = `${req.protocol}://${req.get('host')}/uploads/profile_images/${user.image}`;
+}
+
     res.json(user);
   } catch (err) {
     console.error('Error fetching user profile:', err);
     res.status(500).json({ error: 'Failed to fetch user profile' });
   }
 });
+
+// ===== Update User Profile =====
+app.put('/api/users/profile', upload.single('image'), async (req, res) => {
+  const userId = req.query.user_id;
+  if (!userId) {
+    return res.status(400).json({ error: 'Missing user_id' });
+  }
+
+  const { firstname, lastname, email, contact_number } = req.body;
+  let profileImageFilename = null;
+
+  if (req.file) {
+    profileImageFilename = req.file.filename;
+  }
+
+  try {
+    // Build dynamic update query
+    const fields = [];
+    const values = [];
+
+    if (firstname) { fields.push('firstname = ?'); values.push(firstname); }
+    if (lastname) { fields.push('lastname = ?'); values.push(lastname); }
+    if (email) { fields.push('email = ?'); values.push(email); }
+    if (contact_number) { fields.push('contact_number = ?'); values.push(contact_number); }
+    if (profileImageFilename) { fields.push('image = ?'); values.push(profileImageFilename); }
+
+    if (fields.length === 0) {
+      return res.status(400).json({ error: 'No fields to update' });
+    }
+
+    values.push(userId);
+
+    await db.query(
+      `UPDATE users SET ${fields.join(', ')} WHERE id = ?`,
+      values
+    );
+
+    res.json({ message: 'Profile updated successfully' });
+  } catch (err) {
+    console.error('Error updating user profile:', err);
+    res.status(500).json({ error: 'Failed to update profile' });
+  }
+});
+
+// ===== Serve Uploaded Images =====
+app.use('/uploads/profile_images', express.static(path.join(__dirname, 'uploads/profile_images')));
+
 
 
 
@@ -521,6 +594,9 @@ app.delete('/api/summary/:id', async (req, res) => {
     res.status(500).json({ error: 'Failed to delete summary' });
   }
 });
+
+
+
 
 // Start Server
 app.listen(PORT, () => {

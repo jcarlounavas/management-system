@@ -1,6 +1,8 @@
 import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import DashboardLayout from '../dist/dashboard/DashboardLayout';
+import AccountCircleIcon from '@mui/icons-material/AccountCircle';
+
 
 interface Contact {
   id: number;
@@ -59,7 +61,11 @@ const Contacts: React.FC = () => {
                       <tbody>
                         {contacts.map((contact) => (
                           <tr className="unread" key={contact.id}>
-                            <td></td>
+                            <td>
+                              <div className="col-auto">
+                                                <AccountCircleIcon style={{ fontSize: 50, color: '#3f51b5' }} />
+                                              </div>
+                            </td>
                             <td>
                               <h6 className="mb-1">{contact.name}</h6>
                               <p className="m-0">{contact.contact_number}</p>

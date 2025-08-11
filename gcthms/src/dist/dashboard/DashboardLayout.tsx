@@ -1,6 +1,5 @@
 import React, { ReactNode, useState } from "react";
 import Sidebar from "./Sidebar";
-import Header from "./Header";
 import ArrowCircleLeftIcon from '@mui/icons-material/ArrowCircleLeft';
 import ArrowCircleRightIcon from '@mui/icons-material/ArrowCircleRight';
 
