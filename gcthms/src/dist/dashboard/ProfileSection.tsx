@@ -97,6 +97,7 @@ const ProfileSection: React.FC = () => {
       if (!response.ok) throw new Error('Failed to update profile');
 
       alert('Profile updated successfully!');
+      window.location.reload();
     } catch (error) {
       console.error('Error updating profile:', error);
     }

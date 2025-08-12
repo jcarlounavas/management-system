@@ -5,8 +5,6 @@ import "pdfjs-dist/build/pdf.worker.entry";
 import type { PDFDocumentProxy, PDFPageProxy } from "pdfjs-dist";
 import SaveButton from './SaveButton';
 
-// import Spinner from "./loading/Spinner";
-
 export interface Transaction {
   tx_date: string;
   description: string;
@@ -204,20 +202,6 @@ const FileReader = ({ file, accNum }: { file: File | null, accNum: string }) => 
       };
     };
 
-    // const sendToBackend = async (txs: Transaction[]) => {
-    //   try {
-    //     const res = await fetch("http://localhost:3001/api/transactions", {
-    //       method: "POST",
-    //       headers: { "Content-Type": "application/json" },
-    //       body: JSON.stringify(txs),
-    //     });
-    //     const result = await res.json();
-    //     console.log("POST success");
-    //   } catch (err) {
-    //     console.error("POST failed:", err);
-    //   }
-    // };
-
     const readPdfText = async () => {
   if (!file) return;
 
@@ -235,7 +219,7 @@ const FileReader = ({ file, accNum }: { file: File | null, accNum: string }) => 
       const loadDocument = async () => {
         const loadingTask = pdfjsLib.getDocument({
           data: typedArray,
-          password: "", // initial blank, real one from prompt
+          password: "", 
         });
 
         loadingTask.onPassword = (
@@ -347,9 +331,9 @@ const FileReader = ({ file, accNum }: { file: File | null, accNum: string }) => 
               ))}
             <tr className="table-footer">
               <td>Total</td>
-              <td>{summary.transactions.length}</td>
-              <td>{summary.totalDebit.toLocaleString()}</td>
-              <td>{summary.totalCredit.toLocaleString()}</td>
+              <td className='text-center'>{summary.transactions.length}</td>
+              <td className='text-end'>{summary.totalDebit.toLocaleString()}</td>
+              <td className='text-end'>{summary.totalCredit.toLocaleString()}</td>
             </tr>
           </tbody>
         </table>
