@@ -2,15 +2,21 @@ import React, { useState, ChangeEvent, useEffect } from 'react';
 import DashboardLayout from './DashboardLayout';
 
 interface Users {
+  id?: number;
   firstname: string;
   lastname: string;
   email: string;
   contact_number: string;
   profile_image_url?: string;
 }
+interface AccountNumber {
+  id: number;
+  account_number: string;
+}
 
 const ProfileSection: React.FC = () => {
   const [user, setUser] = useState<Users>({
+
     firstname: '',
     lastname: '',
     email: '',
@@ -19,7 +25,8 @@ const ProfileSection: React.FC = () => {
 
   const [profileImage, setProfileImage] = useState<File | null>(null);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
-
+const [accountNumbers, setAccountNumbers] = useState<AccountNumber[]>([]);
+const [newAccount, setNewAccount] = useState("");
   // Fetch user data
   useEffect(() => {
     const fetchUserData = async () => {
@@ -46,8 +53,27 @@ const ProfileSection: React.FC = () => {
       }
     };
 
+    const fetchUserAccounts = async () => {
+    if (!user.id) return;
+
+    try {
+      const response = await fetch(`http://localhost:3001/api/account-numbers?user_id=${user.id}`, {
+        headers: { 'Content-Type': 'application/json' }
+      });
+
+      if (!response.ok) throw new Error('Failed to fetch account numbers');
+
+      const data: AccountNumber[] = await response.json();
+      setAccountNumbers(data);
+    } catch (error) {
+      console.error('Error fetching account numbers:', error);
+    }
+  };
+
+  fetchUserAccounts();
+
     fetchUserData();
-  }, []);
+  }, [user.id]);
 
   // Handle input change
   const handleChange = (e: ChangeEvent<HTMLInputElement>) => {
@@ -95,26 +121,67 @@ const ProfileSection: React.FC = () => {
       });
 
       if (!response.ok) throw new Error('Failed to update profile');
-
+          for (const acct of accountNumbers) {
+            if (acct.id > 0) { // existing DB account
+              await fetch(`http://localhost:3001/api/account-numbers/${acct.id}`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ account_number: acct.account_number }),
+              });
+            }
+          }
       alert('Profile updated successfully!');
       window.location.reload();
     } catch (error) {
       console.error('Error updating profile:', error);
     }
   };
+    const handleAddAccount =  async (e: React.FormEvent) => {
+      e.preventDefault();
+       if (!newAccount.trim()) return;
+
+      setAccountNumbers([
+    ...accountNumbers,
+    { id: 0, account_number: newAccount } // id 0 = not in DB yet
+  ]);
+
+        const response = await fetch('http://localhost:3001/api/account-numbers', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${localStorage.getItem('token')}`
+          },
+          body: JSON.stringify({ user_id: user.id, account_number: newAccount })
+        });
+        const data = await response.json();
+        if (data.id) {
+          setAccountNumbers(prev =>
+            prev.map(acct =>
+              acct.id === 0 && acct.account_number === newAccount
+                ? { ...acct, id: data.id }
+                : acct
+            )
+          );
+        }
+
+      setNewAccount(""); // Clear input
+    };
+
 
   return (
     <DashboardLayout>
       <div className="auth-main">
-        <div className="auth-wrapper v1">
+        <div className="auth-wrapper v1 d-flex justify-content-center" style={{ width: '100%', padding: '1rem' }}>
           <div className="auth-form">
             <div className="position-relative">
-              <div className="card login-card shadow rounded-4 mb-0">
+              <div className="card login-card  profile-card-flex shadow rounded-4 mb-0" style={{ width: '100%', maxWidth: '600px' }}>
                 <div className="card-body">
                   <h4 className="text-center fw-bold mb-3">Personal Details</h4>
 
-                  <form onSubmit={handleSubmit}>
+                  <form onSubmit={handleSubmit} className='w-100'>
                     {/* Profile Image */}
+                    <div className="row g-4">
+                      <div className="col-md-6">
                     <div className="text-center mb-4">
                       <div
                         className="mx-auto d-flex align-items-center justify-content-center bg-light border rounded-circle overflow-hidden"
@@ -183,23 +250,51 @@ const ProfileSection: React.FC = () => {
                       />
                     </div>
 
+                    </div>
+                    <div className="col-md-6">
+  
                     {/* Contact Number */}
                     <div className="mb-3">
-                      <label htmlFor="contact_number" className="form-label">Account Number</label>
+                      <label htmlFor="contact_number" className="form-label"> Add Account Number</label>
+                      <div className='d-flex gap-2'>
                       <input
                         type="text"
                         name="contact_number"
                         className="form-control"
-                        value={user.contact_number}
-                        onChange={handleChange}
+                        placeholder='Enter account number'
+                        value={newAccount}
+                        onChange={(e) => setNewAccount(e.target.value)}
                       />
+                       <button type="submit" className="btn btn-primary shadow px-sm-4" onClick ={handleAddAccount}>
+                        Add
+                      </button>
+                    </div>    
                     </div>
-
+                    <div className="mb-3">
+                      <label htmlFor="contact_number" className="form-label">Account Number</label>
+                      {accountNumbers.map((acct,idx) => (
+                      <input
+                        key={`${acct.id}-${idx}`}
+                        type="text"
+                        name="contact_number"
+                        className="form-control mb-2"
+                        value={acct.account_number}
+                        onChange={(e) => {
+                        const updated = [...accountNumbers];
+                        updated[idx].account_number = e.target.value;
+                        setAccountNumbers(updated);
+                      }}
+                      />
+                      ))}
+                    </div> 
+                    </div>
+                    </div>
                     <div className="text-center mt-4">
                       <button type="submit" className="btn btn-primary shadow px-sm-4">
                         Save
                       </button>
                     </div>
+                    
                   </form>
 
                 </div>

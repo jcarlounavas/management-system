@@ -617,6 +617,61 @@ app.put('/api/update-password', async (req, res) => {
   }
 });
 
+app.post('/api/account-numbers', async (req, res) => {
+  try {
+    console.log('Received body:', req.body); // <-- log the body
+    const { user_id, account_number } = req.body;
+
+    if (!user_id || !account_number) {
+      return res.status(400).json({ error: 'Missing user_id or account_number' });
+    }
+
+    await db.query(
+      'INSERT INTO user_account_numbers (user_id, account_number) VALUES (?, ?)',
+      [user_id, account_number]
+    );
+
+    res.json({ success: true });
+  } catch (err) {
+    console.error('Error inserting account number:', err); // <-- log the actual error
+    res.status(500).json({ error: 'Internal Server Error' });
+  }
+});
+
+app.get('/api/account-numbers', async (req, res) => {
+  try {
+    const user_id = req.query.user_id;
+    if (!user_id) return res.status(400).json({ error: 'Missing user_id' });
+
+    const [rows] = await db.query(
+      'SELECT account_number FROM user_account_numbers WHERE user_id = ?',
+      [user_id]
+    );
+
+    res.json(rows); // returns array of { account_number: '...' }
+  } catch (err) {
+    console.error('Error fetching account numbers:', err);
+    res.status(500).json({ error: 'Internal Server Error' });
+  }
+});
+app.put('/api/account-numbers/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { account_number } = req.body;
+
+    if (!account_number) return res.status(400).json({ error: 'Missing account number' });
+
+    await db.query(
+      'UPDATE user_account_numbers SET account_number = ? WHERE id = ?',
+      [account_number, id]
+    );
+
+    res.json({ success: true });
+  } catch (err) {
+    console.error('Error updating account number:', err);
+    res.status(500).json({ error: 'Internal Server Error' });
+  }
+});
 
 
 // Start Server

@@ -22092,3 +22092,13 @@ select.form-control[data-multiselectsplitter-firstselect-selector], select.form-
 .flip-card-container.flipping .card {
   transform: rotateY(180deg) rotateZ(180deg)  rotateX(180deg);
 }
+
+.profile-card-flex {
+  width: auto; /* allow natural expansion */
+  max-width: 100%; /* prevent overflow */
+  display: inline-block; /* size based on content */
+}
+
+.profile-card-flex .card-body {
+  width: 100%;
+}
