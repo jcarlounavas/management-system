@@ -278,7 +278,7 @@ const TransactionTable: React.FC = () => {
                     <tbody>
                       {filteredTransactions.map((tx, index) => (
                         <tr key={index}>
-                          <td>{formatDate(tx.tx_date)}</td>
+                          <td className="text-nowrap" >{formatDate(tx.tx_date)}</td>
                           <td>{tx.reference_no}</td>
                           <td>{tx.description}</td>
                           <td>{tx.type}</td>
