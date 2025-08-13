@@ -43,7 +43,14 @@ const ContactTransactions: React.FC = () => {
 
         if (data.transactions.length > 0) {
           setContactName(data.transactions[0].contact_name);
+              if (!startDate && !endDate) {
+              const defaultStart = new Date('2025-06-01');
+              const defaultEnd = new Date('2025-06-30');
+              setStartDate(defaultStart.toISOString().split('T')[0]);
+              setEndDate(defaultEnd.toISOString().split('T')[0]);
+            }
         }
+        
       } catch (error) {
         console.error('Error fetching transactions:', error);
       }
