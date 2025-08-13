@@ -44,10 +44,10 @@ const ContactTransactions: React.FC = () => {
         if (data.transactions.length > 0) {
           setContactName(data.transactions[0].contact_name);
               if (!startDate && !endDate) {
-              const juneStart = new Date('2025-06-01');
-              const juneEnd = new Date('2025-06-30');
-              setStartDate(juneStart.toISOString().split('T')[0]);
-              setEndDate(juneEnd.toISOString().split('T')[0]);
+              const defaultStart = new Date('2025-06-01');
+              const defaultEnd = new Date('2025-06-30');
+              setStartDate(defaultStart.toISOString().split('T')[0]);
+              setEndDate(defaultEnd.toISOString().split('T')[0]);
             }
         }
         
