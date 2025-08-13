@@ -9,6 +9,7 @@ const AuthForm: React.FC<{ mode: 'login' | 'register'; onAuth?: (user: any) => v
   const [contactNumber, setContactNumber] = useState('');
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
+  const [flip, setFlip] = useState(false);
   const navigate = useNavigate();
 
   // Prevent user from going back to login if already logged in (token exists)
@@ -17,6 +18,7 @@ const AuthForm: React.FC<{ mode: 'login' | 'register'; onAuth?: (user: any) => v
     if (mode === 'login' && token) {
       navigate('/dashboard', { replace: true });
     }
+      setFlip(mode === "register");
   }, [mode, navigate]);
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -99,6 +101,7 @@ const AuthForm: React.FC<{ mode: 'login' | 'register'; onAuth?: (user: any) => v
   };
 
   return (
+    <div className="auth-page">
     <div className="auth-main" data-pc-preset="preset-1" data-pc-sidebar-caption="true" data-pc-direction="ltr" data-pc-theme="light">
       <div className="loader-bg">
         <div className="loader-track">
@@ -115,6 +118,7 @@ const AuthForm: React.FC<{ mode: 'login' | 'register'; onAuth?: (user: any) => v
               <span className="r s"></span>
               <span className="r"></span>
             </div>
+            <div className={`flip-card-container ${flip ? 'flipping' : ''}`}>
             <div className="card mb-0">
               <div className="card-body">
                 <h4 className="text-center f-w-500 mt-4 mb-3">
@@ -221,14 +225,24 @@ const AuthForm: React.FC<{ mode: 'login' | 'register'; onAuth?: (user: any) => v
                   {mode === 'login' ? (
                     <div className="d-flex justify-content-between align-items-end mt-4">
                       <h6 className="f-w-500 mb-0">Don't have an account?</h6>
-                      <Link to="/register" className="link-primary">
+                      <Link to="/register" className="link-primary" 
+                      onClick={(e) => {
+                      e.preventDefault(); // stop instant navigation
+                      setFlip(true); // trigger animation
+                      setTimeout(() => navigate("/register"), 600); // navigate after animation finishes
+                      }}>
                         Register here
                       </Link>
                     </div>
                   ) : (
                     <div className="d-flex justify-content-between align-items-end mt-4">
                       <h6 className="f-w-500 mb-0">Already have an account?</h6>
-                      <Link to="/" className="link-primary">
+                      <Link to="/" className="link-primary"
+                      onClick={(e) => {
+                      e.preventDefault(); // stop instant navigation
+                      setFlip(true); // trigger animation
+                      setTimeout(() => navigate("/"), 600); // navigate after animation finishes
+                    }}>
                         Login here
                       </Link>
                     </div>
@@ -241,6 +255,8 @@ const AuthForm: React.FC<{ mode: 'login' | 'register'; onAuth?: (user: any) => v
           </div>
         </div>
       </div>
+      </div>
+    </div>
     </div>
   );
 };
