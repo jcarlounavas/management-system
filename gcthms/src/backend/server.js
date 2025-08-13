@@ -91,7 +91,7 @@ app.post('/api/login', async (req, res) => {
   }
 });
 
-// POST: Insert Summary
+//Insert Summary
 app.post('/api/summary', async (req, res) => {
   const {
     fileName,
@@ -174,7 +174,7 @@ app.post('/api/summary', async (req, res) => {
   }
 });
 
-// ===== Get User Profile =====
+//User Profile
 app.get('/api/users/profile', async (req, res) => {
   const userId = req.query.user_id;
   if (!userId) {
@@ -191,7 +191,6 @@ app.get('/api/users/profile', async (req, res) => {
       return res.status(404).json({ error: 'User not found' });
     }
 
-    // Add full URL for image if exists
     const user = rows[0];
     if (user.image) {
   user.profile_image_url = `${req.protocol}://${req.get('host')}/uploads/profile_images/${user.image}`;

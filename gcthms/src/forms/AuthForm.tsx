@@ -196,18 +196,10 @@ const AuthForm: React.FC<{ mode: 'login' | 'register'; onAuth?: (user: any) => v
 
                   {mode === 'login' && (
                     <div className="d-flex mt-1 justify-content-between align-items-center">
-                      <div className="form-check">
-                        <input
-                          className="form-check-input input-primary"
-                          type="checkbox"
-                          id="rememberMe"
-                          defaultChecked
-                        />
-                        <label className="form-check-label text-muted" htmlFor="rememberMe">
-                          Remember me?
-                        </label>
-                      </div>
-                      <h6 className="text-secondary f-w-400 mb-0">Forgot Password?</h6>
+                      <h6 className="text-secondary f-w-400 mb-0">
+                        <Link to="/" className="link-primary">
+                        Forgot Password?
+                      </Link></h6>
                     </div>
                   )}
 
@@ -220,10 +212,10 @@ const AuthForm: React.FC<{ mode: 'login' | 'register'; onAuth?: (user: any) => v
 
                   {mode === 'login' ? (
                     <div className="d-flex justify-content-between align-items-end mt-4">
-                      <h6 className="f-w-500 mb-0">Don't have an account?</h6>
+                      <h6 className="f-w-500 mb-0">Don't have an account? 
                       <Link to="/register" className="link-primary">
-                        Register here
-                      </Link>
+                         {" "} Register here
+                      </Link></h6>
                     </div>
                   ) : (
                     <div className="d-flex justify-content-between align-items-end mt-4">
