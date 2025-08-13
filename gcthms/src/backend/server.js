@@ -107,27 +107,29 @@ app.post('/api/summary', async (req, res) => {
   try {
     // Insert into summary
     const [result] = await db.query(
-      `INSERT INTO summary (file_name, total_transaction, user_id)
-       VALUES (?, ?, ?)`,
-      [fileName, numberOfTransactions, user_id]
-    );
+    `INSERT INTO summary (file_name, total_transaction, user_id)
+    VALUES (?, ?, ?)`,
+    [fileName, numberOfTransactions, user_id]
+  );
 
     const summaryId = result.insertId;
-
-    // Check for existing reference numbers
+    // Extract reference numbers from uploaded transactions by user_id
     const referenceNos = transactions.map(tx => tx.reference_no).filter(Boolean);
+
     let existingReferences = [];
 
     if (referenceNos.length > 0) {
       const [existing] = await db.query(
-        `SELECT reference_no FROM transactions 
-         WHERE reference_no IN (?)`,
-        [referenceNos]
+        `SELECT t.reference_no 
+        FROM transactions t
+        INNER JOIN summary s ON t.summary_id = s.id
+        WHERE t.reference_no IN (?) AND s.user_id = ?`,
+        [referenceNos, user_id]
       );
+
       existingReferences = existing.map(row => row.reference_no);
     }
-
-    // Prepare transactions (skip duplicates)
+    
     const values = [];
     const skippedDuplicates = [];
 
