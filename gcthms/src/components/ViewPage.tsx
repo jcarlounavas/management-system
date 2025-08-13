@@ -36,6 +36,11 @@ const ViewPage: React.FC = () => {
   const { id } = useParams(); // from route like /summary/:id
   const [summary, setSummary] = useState<GroupedSummary | null>(null);
   const [loading, setLoading] = useState(true);
+    const currency = new Intl.NumberFormat('en-PH', {
+    style: 'currency',
+    currency: 'PHP',
+    maximumFractionDigits: 2,
+  });
 
   useEffect(() => {
     fetch(`http://localhost:3001/api/summary/${id}/details`)
@@ -205,26 +210,26 @@ const ViewPage: React.FC = () => {
               <table className="table table-bordered table-striped">
                 <thead className="table-primary">
                   <tr>
-                    <th>#</th>
-                    <th>Description</th>
-                    <th>Number of Transactions</th>
-                    <th>Total Debit</th>
-                    <th>Total Credit</th>
+                    <th className='text-center'>#</th>
+                    <th className='text-center'>Description</th>
+                    <th className='text-center'>Number of Transactions</th>
+                    <th className='text-center'>Total Debit</th>
+                    <th className='text-center'>Total Credit</th>
                   </tr>
                 </thead>
                 <tbody>
                   {summary.descriptionSummaries.map((item, index) => (
                     <tr key={index}>
-                      <td>{index + 1}</td>
-                      <td>{item.description}</td>
-                      <td>{item.count}</td>
-                      <td className="text-end">{item.totalDebit.toLocaleString()}</td>
-                      <td className="text-end">{item.totalCredit.toLocaleString()}</td>
+                      <td className='text-center'>{index + 1}</td>
+                      <td className='text-center'>{item.description}</td>
+                      <td className='text-center'>{item.count}</td>
+                      <td className="text-end">{currency.format(item.totalDebit)}</td>
+                      <td className="text-end">{currency.format(item.totalCredit)}</td>
                     </tr>
                   ))}
                   <tr className="table-footer">
                     <td colSpan={2}>Total</td>
-                    <td>{summary.totalTransactions}</td>
+                    <td className='text-center'>{summary.totalTransactions}</td>
                     <td className="text-end">{summary.totalDebit.toLocaleString()}</td>
                     <td className="text-end">{summary.totalCredit.toLocaleString()}</td>
                   </tr>

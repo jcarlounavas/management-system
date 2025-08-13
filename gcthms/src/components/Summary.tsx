@@ -14,6 +14,11 @@ interface SummaryEntry {
 const Summary: React.FC = () => {
   const [summaries, setSummaries] = useState<SummaryEntry[]>([]);
   const [loading, setLoading] = useState(true);
+    const currency = new Intl.NumberFormat('en-PH', {
+    style: 'currency',
+    currency: 'PHP',
+    maximumFractionDigits: 2,
+  });
 
   useEffect(() => {
     fetchSummaries();
@@ -116,8 +121,8 @@ const Summary: React.FC = () => {
                           {summary.file_name}
                         </td>
                         <td className="text-center">{summary.totalTransactions}</td>
-                        <td className="text-end">{summary.totalDebit.toLocaleString()}</td>
-                        <td className="text-end">{summary.totalCredit.toLocaleString()}</td>
+                        <td className="text-end">{currency.format(summary.totalDebit)}</td>
+                        <td className="text-end">{currency.format(summary.totalCredit)}</td>
                         <td className="text-center">
                           <Link
                             to={`/summary/${summary.summary_id}`}

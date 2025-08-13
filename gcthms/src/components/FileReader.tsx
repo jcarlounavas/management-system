@@ -41,6 +41,11 @@ const FileReader = ({ file, accNum }: { file: File | null, accNum: string }) => 
   const [error, setError] = useState<string>("");
   const [loading, setLoading] = useState(false);
   const [uploadedFile, setUploadedFile] = useState<File | null>(null);
+    const currency = new Intl.NumberFormat('en-PH', {
+    style: 'currency',
+    currency: 'PHP',
+    maximumFractionDigits: 2,
+  });
 
 
 
@@ -325,15 +330,15 @@ const FileReader = ({ file, accNum }: { file: File | null, accNum: string }) => 
                 <tr key={index}>
                   <td>{item.pair}</td>
                   <td className='text-center'>{item.count}</td>
-                  <td className='text-end'>{item.totalDebit.toLocaleString()}</td>
-                  <td className='text-end'>{item.totalCredit.toLocaleString()}</td>
+                  <td className='text-end'>{currency.format(item.totalDebit)}</td>
+                  <td className='text-end'>{currency.format(item.totalCredit)}</td>
                 </tr>
               ))}
             <tr className="table-footer">
               <td>Total</td>
               <td className='text-center'>{summary.transactions.length}</td>
-              <td className='text-end'>{summary.totalDebit.toLocaleString()}</td>
-              <td className='text-end'>{summary.totalCredit.toLocaleString()}</td>
+              <td className='text-end'>{currency.format(summary.totalDebit)}</td>
+              <td className='text-end'>{currency.format(summary.totalCredit)}</td>
             </tr>
           </tbody>
         </table>
