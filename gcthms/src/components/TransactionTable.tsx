@@ -15,6 +15,10 @@ interface Transaction {
   type: string;
   sender: string;
   receiver: string;
+  sender_name: string;
+  receiver_name: string;
+  description_with_names: string;
+
 }
 
 const TransactionTable: React.FC = () => {
@@ -78,6 +82,10 @@ const TransactionTable: React.FC = () => {
           return tx.receiver.toLowerCase().includes(term);
         case 'Reference':
           return tx.reference_no.toLowerCase().includes(term);
+        case 'From Contacts':
+          return (tx.sender_name.toLowerCase().includes(term) ||
+                  tx.receiver_name.toLowerCase().includes(term) ||
+                  tx.description_with_names.toLowerCase().includes(term));
         case 'All':
         default:
           return (
@@ -236,6 +244,7 @@ const TransactionTable: React.FC = () => {
                     <option value="Sender">Sender</option>
                     <option value="Receiver">Receiver</option>
                     <option value="Reference">Reference No</option>
+                    <option value="From Contacts">From Contacts</option>
                   </select>
 
                   <input type="text" className="form-control" placeholder={`Search ${searchCategory}`} value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} />
@@ -280,10 +289,10 @@ const TransactionTable: React.FC = () => {
                         <tr key={index}>
                           <td className="text-nowrap" >{formatDate(tx.tx_date)}</td>
                           <td>{tx.reference_no}</td>
-                          <td>{tx.description}</td>
+                          <td>{tx.description_with_names}</td>
                           <td>{tx.type}</td>
-                          <td>{tx.sender}</td>
-                          <td>{tx.receiver}</td>
+                          <td>{tx.sender_name}</td>
+                          <td>{tx.receiver_name}</td>
                           <td className='text-end'>{tx.debit.toFixed(2)}</td>
                           <td className='text-end'>{tx.credit.toFixed(2)}</td>
                         </tr>

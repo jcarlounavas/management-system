@@ -262,9 +262,36 @@ app.get('/api/transactions', async (req, res) => {
     }
 
     let query = `
-      SELECT t.*
+      SELECT 
+        t.id,
+        t.tx_date,
+        t.description,
+        t.reference_no,
+        t.debit,
+        t.credit,
+        t.type,
+        t.sender,
+        COALESCE(sender_contact.name, t.sender) AS sender_name,
+        t.receiver,
+        COALESCE(receiver_contact.name, t.receiver) AS receiver_name,
+        t.balance,
+        t.summary_id,
+        CASE 
+          WHEN t.sender = sender_contact.contact_number THEN 'Sender'
+          WHEN t.receiver = receiver_contact.contact_number THEN 'Receiver'
+        END AS role,
+        CONCAT(
+          'Transfer from ',
+          COALESCE(sender_contact.name, t.sender),
+          ' to ',
+          COALESCE(receiver_contact.name, t.receiver)
+        ) AS description_with_names
       FROM transactions t
       JOIN summary s ON t.summary_id = s.id
+      LEFT JOIN contacts sender_contact
+        ON t.sender = sender_contact.contact_number AND sender_contact.user_id = s.user_id
+      LEFT JOIN contacts receiver_contact
+        ON t.receiver = receiver_contact.contact_number AND receiver_contact.user_id = s.user_id
       WHERE s.user_id = ?
     `;
     const params = [user_id];
@@ -274,6 +301,8 @@ app.get('/api/transactions', async (req, res) => {
       params.push(startDate, endDate);
     }
 
+    query += ' ORDER BY t.tx_date ASC, t.id ASC';
+
     const [rows] = await db.query(query, params);
     res.json(rows);
   } catch (err) {
@@ -281,6 +310,7 @@ app.get('/api/transactions', async (req, res) => {
     res.status(500).json({ error: 'Internal Server Error' });
   }
 });
+
 
 
 //GET: Summary Transactions
