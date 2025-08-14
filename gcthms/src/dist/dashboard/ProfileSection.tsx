@@ -74,6 +74,7 @@ const [newAccount, setNewAccount] = useState("");
 
     fetchUserData();
   }, [user.id]);
+  
 
   // Handle input change
   const handleChange = (e: ChangeEvent<HTMLInputElement>) => {
@@ -122,12 +123,13 @@ const [newAccount, setNewAccount] = useState("");
 
       if (!response.ok) throw new Error('Failed to update profile');
           for (const acct of accountNumbers) {
-            if (acct.id > 0) { // existing DB account
+            if (acct.id) {
               await fetch(`http://localhost:3001/api/account-numbers/${acct.id}`, {
                 method: 'PUT',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ account_number: acct.account_number }),
               });
+              console.log(`Updated account number ${acct.id} to ${acct.account_number}`);
             }
           }
       alert('Profile updated successfully!');
@@ -136,13 +138,14 @@ const [newAccount, setNewAccount] = useState("");
       console.error('Error updating profile:', error);
     }
   };
+  
     const handleAddAccount =  async (e: React.FormEvent) => {
       e.preventDefault();
        if (!newAccount.trim()) return;
 
       setAccountNumbers([
     ...accountNumbers,
-    { id: 0, account_number: newAccount } // id 0 = not in DB yet
+    { id: 0, account_number: newAccount }
   ]);
 
         const response = await fetch('http://localhost:3001/api/account-numbers', {
@@ -263,7 +266,11 @@ const [newAccount, setNewAccount] = useState("");
                         className="form-control"
                         placeholder='Enter account number'
                         value={newAccount}
-                        onChange={(e) => setNewAccount(e.target.value)}
+                        onChange={(e) => {
+                          const onlyNums = e.target.value.replace(/\D/g, '');
+                          setNewAccount(onlyNums)}}
+                        maxLength={11}
+                        pattern="09\d{9}"
                       />
                        <button type="submit" className="btn btn-primary shadow px-sm-4" onClick ={handleAddAccount}>
                         Add
@@ -273,6 +280,8 @@ const [newAccount, setNewAccount] = useState("");
                     <div className="mb-3">
                       <label htmlFor="contact_number" className="form-label">Account Number</label>
                       {accountNumbers.map((acct,idx) => (
+                      <div key={acct.id} className="mb-2">
+                        <p>{acct.id}</p>
                       <input
                         key={`${acct.id}-${idx}`}
                         type="text"
@@ -280,11 +289,17 @@ const [newAccount, setNewAccount] = useState("");
                         className="form-control mb-2"
                         value={acct.account_number}
                         onChange={(e) => {
-                        const updated = [...accountNumbers];
-                        updated[idx].account_number = e.target.value;
-                        setAccountNumbers(updated);
-                      }}
+                          const onlyNums = e.target.value.replace(/\D/g, '');
+                          const updated = [...accountNumbers];
+                          updated[idx].account_number = onlyNums;
+                          setAccountNumbers(updated);
+                        }}
+
+                      maxLength={11}
+                        pattern="09\d{9}"
+                        
                       />
+                      </div>
                       ))}
                     </div> 
                     </div>
