@@ -677,16 +677,17 @@ app.get('/api/account-numbers', async (req, res) => {
     if (!user_id) return res.status(400).json({ error: 'Missing user_id' });
 
     const [rows] = await db.query(
-      'SELECT account_number FROM user_account_numbers WHERE user_id = ?',
+      'SELECT id, account_number FROM user_account_numbers WHERE user_id = ?',
       [user_id]
     );
 
-    res.json(rows); // returns array of { account_number: '...' }
+    res.json(rows); // now includes both id and account_number
   } catch (err) {
     console.error('Error fetching account numbers:', err);
     res.status(500).json({ error: 'Internal Server Error' });
   }
 });
+
 
 // Update Account Number
 app.put('/api/account-numbers/:id', async (req, res) => {

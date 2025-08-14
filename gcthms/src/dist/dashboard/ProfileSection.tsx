@@ -98,46 +98,59 @@ const [newAccount, setNewAccount] = useState("");
   };
 
   // Handle form submit
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
+const handleSubmit = async (e: React.FormEvent) => {
+  e.preventDefault();
 
-    const formData = new FormData();
-    formData.append('firstname', user.firstname);
-    formData.append('lastname', user.lastname);
-    formData.append('email', user.email);
-    formData.append('contact_number', user.contact_number);
+  const formData = new FormData();
+  formData.append('firstname', user.firstname);
+  formData.append('lastname', user.lastname);
+  formData.append('email', user.email);
+  formData.append('contact_number', user.contact_number);
 
-    if (profileImage) {
-      formData.append('image', profileImage);
+  if (profileImage) {
+    formData.append('image', profileImage);
+  }
+
+  try {
+    const user_id = localStorage.getItem('user_id');
+    const response = await fetch(`http://localhost:3001/api/users/profile?user_id=${user_id}`, {
+      method: 'PUT',
+      headers: {
+        Authorization: `Bearer ${localStorage.getItem('token')}`,
+      },
+      body: formData,
+    });
+
+    if (!response.ok) throw new Error('Failed to update profile');
+
+    // Update each existing account number
+for (const acct of accountNumbers) {
+  if (!acct.id) {
+    console.error("Missing account ID for:", acct);
+    continue;
+  }
+  await fetch(`http://localhost:3001/api/account-numbers/${acct.id}`, {
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ account_number: acct.account_number }),
+  });
+}
+
+
+    // Re-fetch account numbers to avoid stale duplicates
+    const acctRes = await fetch(`http://localhost:3001/api/account-numbers?user_id=${user.id}`);
+    if (acctRes.ok) {
+      const freshAccounts: AccountNumber[] = await acctRes.json();
+      setAccountNumbers(freshAccounts);
     }
 
-    try {
-      const user_id = localStorage.getItem('user_id');
-      const response = await fetch(`http://localhost:3001/api/users/profile?user_id=${user_id}`, {
-        method: 'PUT',
-        headers: {
-          Authorization: `Bearer ${localStorage.getItem('token')}`,
-        },
-        body: formData,
-      });
+    alert('Profile updated successfully!');
+  } catch (error) {
+    console.error('Error updating profile:', error);
+  }
+};
 
-      if (!response.ok) throw new Error('Failed to update profile');
-          for (const acct of accountNumbers) {
-            if (acct.id) {
-              await fetch(`http://localhost:3001/api/account-numbers/${acct.id}`, {
-                method: 'PUT',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ account_number: acct.account_number }),
-              });
-              console.log(`Updated account number ${acct.id} to ${acct.account_number}`);
-            }
-          }
-      alert('Profile updated successfully!');
-      window.location.reload();
-    } catch (error) {
-      console.error('Error updating profile:', error);
-    }
-  };
+
   
     const handleAddAccount =  async (e: React.FormEvent) => {
       e.preventDefault();
@@ -280,8 +293,6 @@ const [newAccount, setNewAccount] = useState("");
                     <div className="mb-3">
                       <label htmlFor="contact_number" className="form-label">Account Number</label>
                       {accountNumbers.map((acct,idx) => (
-                      <div key={acct.id} className="mb-2">
-                        <p>{acct.id}</p>
                       <input
                         key={`${acct.id}-${idx}`}
                         type="text"
@@ -292,6 +303,7 @@ const [newAccount, setNewAccount] = useState("");
                           const onlyNums = e.target.value.replace(/\D/g, '');
                           const updated = [...accountNumbers];
                           updated[idx].account_number = onlyNums;
+                          console.log('Updated account number:', updated[idx]);
                           setAccountNumbers(updated);
                         }}
 
@@ -299,7 +311,6 @@ const [newAccount, setNewAccount] = useState("");
                         pattern="09\d{9}"
                         
                       />
-                      </div>
                       ))}
                     </div> 
                     </div>
