@@ -149,6 +149,31 @@ for (const acct of accountNumbers) {
     console.error('Error updating profile:', error);
   }
 };
+      const handleDeleteAccount = async (acctId: number) => {
+  const confirmed = window.confirm('Are you sure you want to delete this account number? This action cannot be undone.');
+  if (!confirmed) return;
+
+  try {
+    const res = await fetch(`http://localhost:3001/api/account-numbers/${acctId}`, {
+      method: 'DELETE',
+      headers: {
+        Authorization: `Bearer ${localStorage.getItem('token')}`,
+      },
+    });
+
+    if (res.ok) {
+      alert('Account number deleted successfully.');
+      // Remove from state
+      setAccountNumbers(prev => prev.filter(acct => acct.id !== acctId));
+    } else {
+      const errorData = await res.json();
+      alert(`Failed to delete account number: ${errorData.error || 'Unknown error'}`);
+    }
+  } catch (error) {
+    console.error('Delete failed:', error);
+    alert('Failed to delete account number.');
+  }
+};
 
 
   
@@ -181,6 +206,8 @@ for (const acct of accountNumbers) {
         }
 
       setNewAccount(""); // Clear input
+        
+
     };
 
 
@@ -292,26 +319,43 @@ for (const acct of accountNumbers) {
                     </div>
                     <div className="mb-3">
                       <label htmlFor="contact_number" className="form-label">Account Number</label>
-                      {accountNumbers.map((acct,idx) => (
-                      <input
-                        key={`${acct.id}-${idx}`}
-                        type="text"
-                        name="contact_number"
-                        className="form-control mb-2"
-                        value={acct.account_number}
-                        onChange={(e) => {
-                          const onlyNums = e.target.value.replace(/\D/g, '');
-                          const updated = [...accountNumbers];
-                          updated[idx].account_number = onlyNums;
-                          console.log('Updated account number:', updated[idx]);
-                          setAccountNumbers(updated);
-                        }}
-
-                      maxLength={11}
-                        pattern="09\d{9}"
-                        
-                      />
+                  <table className="table table-bordered">
+                    <thead>
+                      <tr>
+                        <th>Account Number</th>
+                        <th>Action</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {accountNumbers.map((acct, idx) => (
+                        <tr key={`${acct.id}-${idx}`}>
+                          <td>
+                            <input
+                              type="text"
+                              name="account_number"
+                              className="form-control"
+                              value={acct.account_number}
+                              onChange={(e) => {
+                                const onlyNums = e.target.value.replace(/\D/g, '');
+                                const updated = [...accountNumbers];
+                                updated[idx].account_number = onlyNums;
+                                console.log('Updated account number:', updated[idx]);
+                                setAccountNumbers(updated);
+                              }}
+                              maxLength={11}
+                              pattern="09\d{9}"
+                            />
+                          </td>
+                          <td><button
+                            className="btn btn-danger"
+                            onClick={() => handleDeleteAccount(acct.id)}>
+                            Delete
+                          </button></td>
+                        </tr>
                       ))}
+                    </tbody>
+                  </table>
+
                     </div> 
                     </div>
                     </div>

@@ -688,7 +688,6 @@ app.get('/api/account-numbers', async (req, res) => {
   }
 });
 
-
 // Update Account Number
 app.put('/api/account-numbers/:id', async (req, res) => {
   try {
@@ -720,6 +719,30 @@ app.put('/api/account-numbers/:id', async (req, res) => {
   }
 });
 
+// Delete Account Number
+app.delete('/api/account-numbers/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    if (!id) {
+      return res.status(400).json({ error: 'Missing account number ID' });
+    }
+
+    const [result] = await db.query(
+      'DELETE FROM user_account_numbers WHERE id = ?',
+      [id]
+    );
+
+    if (result.affectedRows === 0) {
+      return res.status(404).json({ error: 'Account number not found' });
+    }
+
+    res.json({ success: true });
+  } catch (err) {
+    console.error('Error deleting account number:', err);
+    res.status(500).json({ error: 'Internal Server Error' });
+  }
+});
 
 
 // Start Server
