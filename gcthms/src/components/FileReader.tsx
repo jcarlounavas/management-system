@@ -89,6 +89,8 @@ const FileReader = ({ file, accNum }: { file: File | null, accNum: string }) => 
       for (const line of lines) {
         const dateMatch = line.match(/\d{4}-\d{2}-\d{2} \d{2}:\d{2} (AM|PM)/i);
         const tx_date = dateMatch ? dateMatch[0] : "";
+        let matched = false;
+
 
 
         const referenceMatch = line.match(/\b\d{13,}\b/);
@@ -183,16 +185,53 @@ const FileReader = ({ file, accNum }: { file: File | null, accNum: string }) => 
               pushTransaction({ tx_date, description, reference_no, type: "Cashout", sender: myAccount, receiver, debit, credit: 0 }, debit, 0);
             },
           },
+          
         ];
 
-        for (const { regex, process } of patterns) {
-          const match = line.match(regex);
-          if (match) {
-            process(match);
-            break;
-          }
-        }
+
+            for (const { regex, process } of patterns) {
+              const match = line.match(regex);
+              if (match) {
+                process(match);
+                matched = true;
+                break;
+              }
+            }
+
+        // if (!matched) {
+        //   if()
+        //   const description = line.trim();
+        //   const debitMatch = line.match(/(?:\bdebit\b|\bwithdrawal\b)\s+([\d,.]+)/i);
+        //   const creditMatch = line.match(/(?:\bcredit\b|\bdeposit\b)\s+([\d,.]+)/i);
+        //   const debit = debitMatch ? parseFloat(debitMatch[1].replace(/,/g, "")) : 0;
+        //   const credit = creditMatch ? parseFloat(creditMatch[1].replace(/,/g, "")) : 0;
+
+        //   let sender = "";
+        //   let receiver = "";
+
+        //   if (line.includes(myAccount)) {
+        //     if (debit > 0) {
+        //       sender = myAccount;
+        //       receiver = "Unknown";
+        //     } else if (credit > 0) {
+        //       sender = "Unknown";
+        //       receiver = myAccount;
+        //     }
+        //   } else {
+        //     sender = "Unknown";
+        //     receiver = "Unknown";
+        //   }
+
+        //   if (debit > 0 || credit > 0) {
+        //     totalDebit += debit;
+        //     totalCredit += credit;
+        //     buildPair(description, debit, credit);
+        //     pushTransaction({ tx_date, description, reference_no, type: "Others", sender, receiver, debit, credit }, debit, credit);
+        //   }
+        // }
+
       }
+
 
       return {
         fileName,
@@ -328,7 +367,7 @@ const FileReader = ({ file, accNum }: { file: File | null, accNum: string }) => 
               .sort((a, b) => b.count - a.count)
               .map((item, index) => (
                 <tr key={index}>
-                  <td>{item.pair}</td>
+                  <td className='text-center'>{item.pair}</td>
                   <td className='text-center'>{item.count}</td>
                   <td className='text-end'>{currency.format(item.totalDebit)}</td>
                   <td className='text-end'>{currency.format(item.totalCredit)}</td>
