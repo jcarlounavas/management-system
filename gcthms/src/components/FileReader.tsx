@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import * as pdfjsLib from "pdfjs-dist";
 import "pdfjs-dist/build/pdf.worker.entry";
@@ -22,7 +21,7 @@ export interface Summary {
   totalCredit: number;
   totalDebit: number;
   totalBalance: number;
-  fileName: string; 
+  fileName: string;
   pairSummaries?: {
     pair: string;
     count: number;
@@ -31,45 +30,41 @@ export interface Summary {
   }[];
 }
 
-
-
 const FileReader = ({ file, accNum }: { file: File | null, accNum: string }) => {
-
   const [fileName, setFileName] = useState<string>('');
   const myAccount = accNum;
   const [summary, setSummary] = useState<Summary | null>(null);
   const [error, setError] = useState<string>("");
   const [loading, setLoading] = useState(false);
   const [uploadedFile, setUploadedFile] = useState<File | null>(null);
-    const currency = new Intl.NumberFormat('en-PH', {
+  const currency = new Intl.NumberFormat('en-PH', {
     style: 'currency',
     currency: 'PHP',
     maximumFractionDigits: 2,
   });
 
-
-
   useEffect(() => {
     if (file) {
-    setUploadedFile(file);
-    setFileName(file.name); 
-  }
+      setUploadedFile(file);
+      setFileName(file.name);
+    }
+
     const extractStartingBalance = (lines: string[]): number | null => {
       for (const line of lines) {
         if (/starting balance/i.test(line)) {
           const match = line.match(/(\d{1,3}(?:,\d{3})*|\d+)\.\d{2}/);
-          if (match) return parseFloat(match[1].replace(/,/g, ""));
+          if (match) return parseFloat(match[0].replace(/,/g, ""));
         }
       }
       for (const line of lines) {
         const match = line.match(/(\d{1,3}(?:,\d{3})*|\d+)\.\d{2}(?=\s*$)/);
-        if (match) return parseFloat(match[1].replace(/,/g, ""));
+        if (match) return parseFloat(match[0].replace(/,/g, ""));
       }
       return null;
     };
 
     const parseTransactions = (text: string): Summary => {
-      const lines = text.split("\n");
+      const lines = text.split("\n").filter(line => line.trim());
       let totalCredit = 0;
       let totalDebit = 0;
       const transactions: Transaction[] = [];
@@ -86,23 +81,20 @@ const FileReader = ({ file, accNum }: { file: File | null, accNum: string }) => 
         transactions.push({ ...tx, balance: runningBalance });
       };
 
+      const buildPair = (label: string, debit: number, credit: number) => {
+        if (!pairMap.has(label)) pairMap.set(label, { count: 0, totalDebit: 0, totalCredit: 0 });
+        const group = pairMap.get(label)!;
+        group.count++;
+        group.totalDebit += debit;
+        group.totalCredit += credit;
+      };
+
       for (const line of lines) {
         const dateMatch = line.match(/\d{4}-\d{2}-\d{2} \d{2}:\d{2} (AM|PM)/i);
         const tx_date = dateMatch ? dateMatch[0] : "";
-        let matched = false;
-
-
 
         const referenceMatch = line.match(/\b\d{13,}\b/);
         const reference_no = referenceMatch ? referenceMatch[0] : "";
-
-        const buildPair = (label: string, debit: number, credit: number) => {
-          if (!pairMap.has(label)) pairMap.set(label, { count: 0, totalDebit: 0, totalCredit: 0 });
-          const group = pairMap.get(label)!;
-          group.count++;
-          group.totalDebit += debit;
-          group.totalCredit += credit;
-        };
 
         const patterns: {
           regex: RegExp;
@@ -185,53 +177,174 @@ const FileReader = ({ file, accNum }: { file: File | null, accNum: string }) => 
               pushTransaction({ tx_date, description, reference_no, type: "Cashout", sender: myAccount, receiver, debit, credit: 0 }, debit, 0);
             },
           },
-          
+          {
+            regex: /Received\s+(.+?)\s+\d{7,}\s+([\d,.]+)/i,
+            type: "Received",
+            process: (m) => {
+              const [, sender, creditStr] = m;
+              const credit = parseFloat(creditStr.replace(/,/g, ""));
+              totalCredit += credit;
+              const description = `Received from ${sender}`;
+              buildPair(description, 0, credit);
+              pushTransaction({ tx_date, description, reference_no, type: "Received", sender, receiver: myAccount, debit: 0, credit }, 0, credit);
+            },
+          },
+          {
+            regex: /GLoan Repayment.*?([\d,.]+)\s+([\d,.]+)\s+\d{4}-\d{2}-\d{2}/i,
+            type: "GLoan",
+            process: (m) => {
+              const debit = parseFloat(m[1].replace(/,/g, ""));
+              totalDebit += debit;
+              const description = "GLoan Repayment";
+              buildPair(description, debit, 0);
+              pushTransaction({ tx_date, description, reference_no, type: "GLoan", sender: myAccount, receiver: "", debit, credit: 0 }, debit, 0);
+            },
+          },
+          // New GCash-specific patterns for common "Others" transactions
+          {
+            regex: /Pay QR to\s+(.+?)\s+\d{7,}\s+([\d,.]+(?:\.\d{2}))/i,
+            type: "Pay QR",
+            process: (m) => {
+              const [, receiver, debitStr] = m;
+              const debit = parseFloat(debitStr.replace(/,/g, ""));
+              totalDebit += debit;
+              const description = `Pay QR to ${receiver}`;
+              buildPair(description, debit, 0);
+              pushTransaction({ tx_date, description, reference_no, type: "Pay QR", sender: myAccount, receiver, debit, credit: 0 }, debit, 0);
+            },
+          },
+          {
+            regex: /Buy Load.*?([\d,.]+(?:\.\d{2}))/i,
+            type: "Buy Load",
+            process: (m) => {
+              const debit = parseFloat(m[1].replace(/,/g, ""));
+              totalDebit += debit;
+              const description = "Buy Load";
+              buildPair(description, debit, 0);
+              pushTransaction({ tx_date, description, reference_no, type: "Buy Load", sender: myAccount, receiver: "", debit, credit: 0 }, debit, 0);
+            },
+          },
+          {
+            regex: /Express Send to\s+(.+?)\s+\d{7,}\s+([\d,.]+(?:\.\d{2}))/i,
+            type: "Express Send",
+            process: (m) => {
+              const [, receiver, debitStr] = m;
+              const debit = parseFloat(debitStr.replace(/,/g, ""));
+              totalDebit += debit;
+              const description = `Express Send to ${receiver}`;
+              buildPair(description, debit, 0);
+              pushTransaction({ tx_date, description, reference_no, type: "Express Send", sender: myAccount, receiver, debit, credit: 0 }, debit, 0);
+            },
+          },
+          {
+            regex: /Bill Payment to\s+(.+?)\s+\d{7,}\s+([\d,.]+(?:\.\d{2}))/i,
+            type: "Bill Payment",
+            process: (m) => {
+              const [, receiver, debitStr] = m;
+              const debit = parseFloat(debitStr.replace(/,/g, ""));
+              totalDebit += debit;
+              const description = `Bill Payment to ${receiver}`;
+              buildPair(description, debit, 0);
+              pushTransaction({ tx_date, description, reference_no, type: "Bill Payment", sender: myAccount, receiver, debit, credit: 0 }, debit, 0);
+            },
+          },
+          {
+            regex: /Sent\s+(.+?)\s+\d{7,}\s+([\d,.]+(?:\.\d{2}))/i,
+            type: "Sent",
+            process: (m) => {
+              const [, receiver, debitStr] = m;
+              const debit = parseFloat(debitStr.replace(/,/g, ""));
+              totalDebit += debit;
+              const description = `Sent to ${receiver}`;
+              buildPair(description, debit, 0);
+              pushTransaction({ tx_date, description, reference_no, type: "Sent", sender: myAccount, receiver, debit, credit: 0 }, debit, 0);
+            },
+          }
         ];
 
+        let matched = false;
+        for (const { regex, process, type } of patterns) {
+          const match = line.match(regex);
+          if (match) {
+            process(match);
+            matched = true;
+            break;
+          }
+        }
 
-            for (const { regex, process } of patterns) {
-              const match = line.match(regex);
-              if (match) {
-                process(match);
-                matched = true;
-                break;
+        if (!matched && tx_date && reference_no) {
+          // Enhanced "Others" logic for GCash transactions
+          const isHeader = /Date|Time|Description|Reference|Balance|STARTING|ENDING|TOTAL|Summary|Available|Fees|Page/i.test(line);
+          if (isHeader) continue;
+
+          const amountMatch = line.match(/(?:PHP\s*)?(?:-|\()?(\d{1,3}(?:,\d{3})*\.\d{2})(?:\))?/i);
+          if (!amountMatch) continue;
+
+          const amountStr = amountMatch[1];
+          let amount = parseFloat(amountStr.replace(/,/g, ""));
+          let debit = 0;
+          let credit = 0;
+          let description = line.replace(tx_date, "").replace(reference_no, "").replace(amountMatch[0], "").trim();
+          let sender = "";
+          let receiver = "";
+          let type = "Others";
+
+          
+          const isDebit = /(Pay|Buy|Sent|Load|QR|Bill|Withdraw|-|\()/i.test(line);
+          const isCredit = /(Received|Cash-in|Refund)/i.test(line);
+          if (isDebit || amountMatch[0].startsWith('-') || amountMatch[0].startsWith('(')) {
+            debit = amount;
+            totalDebit += debit;
+          } else if (isCredit) {
+            credit = amount;
+            totalCredit += credit;
+          } else {
+            // Fallback
+            if (runningBalance != null) {
+              const testBalance = runningBalance - amount;
+              if (testBalance >= 0 && line.includes(myAccount)) {
+                debit = amount;
+                totalDebit += debit;
+              } else {
+                credit = amount;
+                totalCredit += credit;
               }
+            } else {
+              credit = amount; // Default to credit if no balance context
+              totalCredit += credit;
             }
+          }
 
-        // if (!matched) {
-        //   if()
-        //   const description = line.trim();
-        //   const debitMatch = line.match(/(?:\bdebit\b|\bwithdrawal\b)\s+([\d,.]+)/i);
-        //   const creditMatch = line.match(/(?:\bcredit\b|\bdeposit\b)\s+([\d,.]+)/i);
-        //   const debit = debitMatch ? parseFloat(debitMatch[1].replace(/,/g, "")) : 0;
-        //   const credit = creditMatch ? parseFloat(creditMatch[1].replace(/,/g, "")) : 0;
+          // Extract sender/receiver for Others
+          const toMatch = line.match(/to\s+(.+?)(?:\s+\d{7,}|\s+PHP|$)/i);
+          const fromMatch = line.match(/from\s+(.+?)(?:\s+\d{7,}|\s+PHP|$)/i);
+          if (toMatch && debit > 0) {
+            receiver = toMatch[1].trim();
+            description = `Payment to ${receiver}`;
+            type = "Payment";
+          } else if (fromMatch && credit > 0) {
+            sender = fromMatch[1].trim();
+            description = `Received from ${sender}`;
+            type = "Received";
+          }
 
-        //   let sender = "";
-        //   let receiver = "";
+          // Clean descriptions
+          if (!description) description = "Miscellaneous";
+          description = description.replace(/\s+/g, " ").trim();
 
-        //   if (line.includes(myAccount)) {
-        //     if (debit > 0) {
-        //       sender = myAccount;
-        //       receiver = "Unknown";
-        //     } else if (credit > 0) {
-        //       sender = "Unknown";
-        //       receiver = myAccount;
-        //     }
-        //   } else {
-        //     sender = "Unknown";
-        //     receiver = "Unknown";
-        //   }
-
-        //   if (debit > 0 || credit > 0) {
-        //     totalDebit += debit;
-        //     totalCredit += credit;
-        //     buildPair(description, debit, credit);
-        //     pushTransaction({ tx_date, description, reference_no, type: "Others", sender, receiver, debit, credit }, debit, credit);
-        //   }
-        // }
-
+          buildPair(description, debit, credit);
+          pushTransaction({
+            tx_date,
+            description,
+            reference_no,
+            type,
+            sender,
+            receiver,
+            debit,
+            credit
+          }, debit, credit);
+        }
       }
-
 
       return {
         fileName,
@@ -247,161 +360,146 @@ const FileReader = ({ file, accNum }: { file: File | null, accNum: string }) => 
     };
 
     const readPdfText = async () => {
-  if (!file) return;
+      if (!file) return;
 
-  try {
-    const reader = new window.FileReader();
-    reader.readAsArrayBuffer(file);
+      try {
+        const reader = new window.FileReader();
+        reader.readAsArrayBuffer(file);
 
-    reader.onload = async () => {
-      setLoading(true);
+        reader.onload = async () => {
+          setLoading(true);
 
-      const typedArray = new Uint8Array(reader.result as ArrayBuffer);
-      let pdf: PDFDocumentProxy;
-      let passwordTries = 0;
+          const typedArray = new Uint8Array(reader.result as ArrayBuffer);
+          let pdf: PDFDocumentProxy;
+          let passwordTries = 0;
 
-      const loadDocument = async () => {
-        const loadingTask = pdfjsLib.getDocument({
-          data: typedArray,
-          password: "", 
-        });
+          const loadDocument = async () => {
+            const loadingTask = pdfjsLib.getDocument({
+              data: typedArray,
+              password: "",
+            });
 
-        loadingTask.onPassword = (
-          callback: (password: string) => void,
-          reason: number
-        ) => {
-          if (reason === pdfjsLib.PasswordResponses.NEED_PASSWORD) {
-            const pw = prompt("This PDF is password protected. Enter password:") || "";
-            if (!pw) {
-              setError("Password is required to open the file.");
-              loadingTask.destroy();
+            loadingTask.onPassword = (
+              callback: (password: string) => void,
+              reason: number
+            ) => {
+              if (reason === pdfjsLib.PasswordResponses.NEED_PASSWORD) {
+                const pw = prompt("This PDF is password protected. Enter password:") || "";
+                if (!pw) {
+                  setError("Password is required to open the file.");
+                  loadingTask.destroy();
+                  return;
+                }
+                callback(pw);
+              } else if (reason === pdfjsLib.PasswordResponses.INCORRECT_PASSWORD) {
+                passwordTries++;
+                const pw = prompt("Incorrect password. Please try again:") || "";
+                if (!pw) {
+                  setError("Failed to open PDF due to incorrect password.");
+                  loadingTask.destroy();
+                  return;
+                }
+                callback(pw);
+              }
+            };
+
+            try {
+              pdf = await loadingTask.promise;
+            } catch (err) {
+              console.error("PDF loading failed:", err);
+              setError("Unable to open PDF. Check password or file.");
               return;
             }
-            callback(pw);
-          } else if (reason === pdfjsLib.PasswordResponses.INCORRECT_PASSWORD) {
-            passwordTries++;
-            const pw = prompt("Incorrect password. Please try again:") || "";
-            if (!pw) {
-              setError("Failed to open PDF due to incorrect password.");
-              loadingTask.destroy();
-              return;
+
+            let fullText = "";
+            for (let page = 1; page <= pdf.numPages; page++) {
+              const pageObj: PDFPageProxy = await pdf.getPage(page);
+              const content = await pageObj.getTextContent();
+              fullText += content.items.map((i: any) => i.str).join(" ") + "\n";
             }
-            callback(pw);
-          }
+
+            const cleaned = fullText.replace(
+              /\b(GGives Auto Repayment|Transfer from|Payment to|Refund from|Bills Payment to|Cash-out to|GCredit|Received|GLoan Repayment|Pay QR to|Buy Load|Express Send to|Bill Payment to|Sent)\b/gi,
+              "\n$1"
+            );
+
+            const parsed = parseTransactions(cleaned);
+            const transactionsWithFileName = parsed.transactions.map(tx => ({
+              ...tx,
+              file_name: fileName,
+            }));
+            setSummary({ ...parsed, fileName: file.name });
+          };
+
+          await loadDocument();
+          setLoading(false);
         };
 
-        try {
-          pdf = await loadingTask.promise;
-        } catch (err) {
-          console.error("PDF loading failed:", err);
-          setError("Unable to open PDF. Check password or file.");
-          return;
-        }
-
-        let fullText = "";
-
-        for (let page = 1; page <= pdf.numPages; page++) {
-          const pageObj: PDFPageProxy = await pdf.getPage(page);
-          const content = await pageObj.getTextContent();
-          fullText += content.items.map((i: any) => i.str).join(" ") + "\n";
-        }
-
-        const cleaned = fullText.replace(
-          /\b(GGives Auto Repayment|Transfer from|Payment to|Refund from|Bills Payment to|Cash-out to|GCredit)\b/gi,
-          "\n$1"
-        );
-
-        
-
-        const parsed = parseTransactions(cleaned);
-
-
-          const transactionsWithFileName = parsed.transactions.map(tx => ({
-          ...tx,
-          file_name: fileName,
-        }));
-        setSummary({ ...parsed, fileName: file.name });
-        // await sendToBackend(transactionsWithFileName);
-      };
-
-      await loadDocument();
-      setLoading(false);
-
+        reader.onerror = () => setError("PDF read error.");
+      } catch (err) {
+        console.error("Error reading PDF:", err);
+        setError("PDF processing error.");
+      }
     };
-
-    reader.onerror = () => setError("PDF read error.");
-  } catch (err) {
-    console.error("Error reading PDF:", err);
-    setError("PDF processing error.");
-  }
-};
-
 
     readPdfText();
   }, [file]);
 
   return (
-  <div className="transaction-summary-ui">
-    <h2 className="section-title">Transaction Summary</h2>
+    <div className="transaction-summary-ui">
+      <h2 className="section-title">Transaction Summary</h2>
 
-  <form>
-    {loading ? (
-      <div className="text-center my-3">
-        <div className="spinner-border text-primary" role="status">
-          <span className="visually-hidden">Loading...</span>
-        </div>
-      </div>
-    ) : summary?.pairSummaries && summary.pairSummaries.length > 0 ? (
-      <div className="table-wrapper">
-        <table className="table table-bordered table-striped">
-          <thead className="table-primary">
-            <tr>
-              <th className='text-center'>Sender → Receiver</th>
-              <th className='text-center'>Number of Transactions</th>
-              <th className='text-center'>Total Debit</th>
-              <th className='text-center'>Total Credit</th>
-            </tr>
-          </thead>
-          <tbody>
-            {summary.pairSummaries
-              .sort((a, b) => b.count - a.count)
-              .map((item, index) => (
-                <tr key={index}>
-                  <td className='text-center'>{item.pair}</td>
-                  <td className='text-center'>{item.count}</td>
-                  <td className='text-end'>{currency.format(item.totalDebit)}</td>
-                  <td className='text-end'>{currency.format(item.totalCredit)}</td>
+      <form>
+        {loading ? (
+          <div className="text-center my-3">
+            <div className="spinner-border text-primary" role="status">
+              <span className="visually-hidden">Loading...</span>
+            </div>
+          </div>
+        ) : summary?.pairSummaries && summary.pairSummaries.length > 0 ? (
+          <div className="table-wrapper">
+            <table className="table table-bordered table-striped">
+              <thead className="table-primary">
+                <tr>
+                  <th className='text-center'>Sender → Receiver</th>
+                  <th className='text-center'>Number of Transactions</th>
+                  <th className='text-center'>Total Debit</th>
+                  <th className='text-center'>Total Credit</th>
                 </tr>
-              ))}
-            <tr className="table-footer">
-              <td>Total</td>
-              <td className='text-center'>{summary.transactions.length}</td>
-              <td className='text-end'>{currency.format(summary.totalDebit)}</td>
-              <td className='text-end'>{currency.format(summary.totalCredit)}</td>
-            </tr>
-          </tbody>
-        </table>
-      </div>
-    ) : (
-      <div className="alert alert-info text-center">No transactions found.</div>
-    )}
-  </form>
-    
+              </thead>
+              <tbody>
+                {summary.pairSummaries
+                  .sort((a, b) => b.count - a.count)
+                  .map((item, index) => (
+                    <tr key={index}>
+                      <td className='text-center'>{item.pair}</td>
+                      <td className='text-center'>{item.count}</td>
+                      <td className='text-end'>{currency.format(item.totalDebit)}</td>
+                      <td className='text-end'>{currency.format(item.totalCredit)}</td>
+                    </tr>
+                  ))}
+                <tr className="table-footer">
+                  <td>Total</td>
+                  <td className='text-center'>{summary.transactions.length}</td>
+                  <td className='text-end'>{currency.format(summary.totalDebit)}</td>
+                  <td className='text-end'>{currency.format(summary.totalCredit)}</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        ) : (
+          <div className="alert alert-info text-center">No transactions found.</div>
+        )}
+      </form>
 
-    {summary && (
-  <SaveButton
-    summary={summary}
-    fileName={uploadedFile?.name || ''}
-  />
-)}
-
-
-
-
-
-  </div>
-);
-
+      {summary && (
+        <SaveButton
+          summary={summary}
+          fileName={uploadedFile?.name || ''}
+        />
+      )}
+    </div>
+  );
 };
 
 export default FileReader;

@@ -67,9 +67,9 @@ const UploadPage: React.FC = () => {
                   className="form-control mb-2"
                 >
                   <option value="" className='text-center'> Select Account number </option>
-                  {accountNumbers.map((acct) => (
+                  {accountNumbers.map((acct, id) => (
                     <option key={acct.account_number} value={acct.account_number}>
-                      {acct.account_number}
+                     {id + 1} - {acct.account_number}
                     </option>
                   ))}
                 </select>
