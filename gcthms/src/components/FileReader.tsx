@@ -69,6 +69,7 @@ const FileReader = ({ file, accNum }: { file: File | null, accNum: string }) => 
       let totalDebit = 0;
       const transactions: Transaction[] = [];
       const pairMap = new Map<string, { count: number; totalDebit: number; totalCredit: number }>();
+      let lastValidDate: string | null = null; 
 
       let runningBalance: number | null = extractStartingBalance(lines);
       if (runningBalance == null) runningBalance = 0;
@@ -91,7 +92,8 @@ const FileReader = ({ file, accNum }: { file: File | null, accNum: string }) => 
 
       for (const line of lines) {
         const dateMatch = line.match(/\d{4}-\d{2}-\d{2} \d{2}:\d{2} (AM|PM)/i);
-        const tx_date = dateMatch ? dateMatch[0] : "";
+        let tx_date: string = dateMatch ? dateMatch[0] : lastValidDate || ""; 
+        if (dateMatch) lastValidDate = tx_date; // Update last valid date
 
         const referenceMatch = line.match(/\b\d{13,}\b/);
         const reference_no = referenceMatch ? referenceMatch[0] : "";
@@ -200,7 +202,6 @@ const FileReader = ({ file, accNum }: { file: File | null, accNum: string }) => 
               pushTransaction({ tx_date, description, reference_no, type: "GLoan", sender: myAccount, receiver: "", debit, credit: 0 }, debit, 0);
             },
           },
-          // New GCash-specific patterns for common "Others" transactions
           {
             regex: /Pay QR to\s+(.+?)\s+\d{7,}\s+([\d,.]+(?:\.\d{2}))/i,
             type: "Pay QR",
@@ -272,8 +273,7 @@ const FileReader = ({ file, accNum }: { file: File | null, accNum: string }) => 
           }
         }
 
-        if (!matched && tx_date && reference_no) {
-          // Enhanced "Others" logic for GCash transactions
+        if (!matched && (tx_date || lastValidDate) && reference_no) {
           const isHeader = /Date|Time|Description|Reference|Balance|STARTING|ENDING|TOTAL|Summary|Available|Fees|Page/i.test(line);
           if (isHeader) continue;
 
@@ -284,12 +284,11 @@ const FileReader = ({ file, accNum }: { file: File | null, accNum: string }) => 
           let amount = parseFloat(amountStr.replace(/,/g, ""));
           let debit = 0;
           let credit = 0;
-          let description = line.replace(tx_date, "").replace(reference_no, "").replace(amountMatch[0], "").trim();
+          let description = line.replace(tx_date || "", "").replace(reference_no, "").replace(amountMatch[0], "").trim();
           let sender = "";
           let receiver = "";
           let type = "Others";
 
-          
           const isDebit = /(Pay|Buy|Sent|Load|QR|Bill|Withdraw|-|\()/i.test(line);
           const isCredit = /(Received|Cash-in|Refund)/i.test(line);
           if (isDebit || amountMatch[0].startsWith('-') || amountMatch[0].startsWith('(')) {
@@ -299,7 +298,6 @@ const FileReader = ({ file, accNum }: { file: File | null, accNum: string }) => 
             credit = amount;
             totalCredit += credit;
           } else {
-            // Fallback
             if (runningBalance != null) {
               const testBalance = runningBalance - amount;
               if (testBalance >= 0 && line.includes(myAccount)) {
@@ -310,12 +308,11 @@ const FileReader = ({ file, accNum }: { file: File | null, accNum: string }) => 
                 totalCredit += credit;
               }
             } else {
-              credit = amount; // Default to credit if no balance context
+              credit = amount;
               totalCredit += credit;
             }
           }
 
-          // Extract sender/receiver for Others
           const toMatch = line.match(/to\s+(.+?)(?:\s+\d{7,}|\s+PHP|$)/i);
           const fromMatch = line.match(/from\s+(.+?)(?:\s+\d{7,}|\s+PHP|$)/i);
           if (toMatch && debit > 0) {
@@ -328,7 +325,6 @@ const FileReader = ({ file, accNum }: { file: File | null, accNum: string }) => 
             type = "Received";
           }
 
-          // Clean descriptions
           if (!description) description = "Miscellaneous";
           description = description.replace(/\s+/g, " ").trim();
 
@@ -424,10 +420,7 @@ const FileReader = ({ file, accNum }: { file: File | null, accNum: string }) => 
             );
 
             const parsed = parseTransactions(cleaned);
-            const transactionsWithFileName = parsed.transactions.map(tx => ({
-              ...tx,
-              file_name: fileName,
-            }));
+            console.log("Parsed transactions:", parsed.transactions); // Debug log
             setSummary({ ...parsed, fileName: file.name });
           };
 

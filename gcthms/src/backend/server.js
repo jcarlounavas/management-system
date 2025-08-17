@@ -698,7 +698,7 @@ app.put('/api/account-numbers/:id', async (req, res) => {
       return res.status(400).json({ error: 'Missing account number' });
     }
 
-    // Optional: Basic format check (adjust to your rules)
+    
     if (!/^\d{8,20}$/.test(account_number)) {
       return res.status(400).json({ error: 'Invalid account number format' });
     }
