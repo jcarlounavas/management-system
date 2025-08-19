@@ -230,8 +230,8 @@ const ViewPage: React.FC = () => {
                   <tr className="table-footer">
                     <td colSpan={2}>Total</td>
                     <td className='text-center'>{summary.totalTransactions}</td>
-                    <td className="text-end">{summary.totalDebit.toLocaleString()}</td>
-                    <td className="text-end">{summary.totalCredit.toLocaleString()}</td>
+                    <td className="text-end">{currency.format(summary.totalDebit)}</td>
+                    <td className="text-end">{currency.format(summary.totalCredit)}</td>
                   </tr>
                 </tbody>
               </table>

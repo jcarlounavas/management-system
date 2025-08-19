@@ -20,6 +20,10 @@ interface Transaction {
   description_with_names: string;
 
 }
+interface TransactionType {
+  id: number;
+  name: string;
+}
 
 const TransactionTable: React.FC = () => {
   const [transactions, setTransactions] = useState<Transaction[]>([]);
@@ -27,6 +31,7 @@ const TransactionTable: React.FC = () => {
   const [startDate, setStartDate] = useState<string>('');
   const [endDate, setEndDate] = useState<string>('');
   const [searchTerm, setSearchTerm] = useState<string>('');
+  const [types, setTypes] = useState<TransactionType[]>([]);
   const [selectedType, setSelectedType] = useState<string>('All');
   const [searchCategory, setSearchCategory] = useState<string>('All');
   const userId = localStorage.getItem('user_id');
@@ -51,6 +56,17 @@ const TransactionTable: React.FC = () => {
     query.append('user_id', userId);
     if (startDate) query.append('startDate', startDate);
     if (endDate) query.append('endDate', endDate);
+    
+    const fetchTypes = async () => {
+        try {
+          const res = await fetch("http://localhost:3001/api/transaction-types");
+          const data: TransactionType[] = await res.json();
+          setTypes(data);
+        } catch (err) {
+          console.error("Error fetching transaction types", err);
+        }
+      };
+    fetchTypes();
 
     fetch(`http://localhost:3001/api/transactions?${query.toString()}`)
       .then((res) => res.json())
@@ -64,6 +80,8 @@ const TransactionTable: React.FC = () => {
       })
       .catch((err) => console.error('Error fetching transactions:', err))
       .finally(() => setLoading(false));
+
+
   }, [startDate, endDate, userId]);
 
   const filteredTransactions = transactions.filter((tx) => {
@@ -235,11 +253,11 @@ const TransactionTable: React.FC = () => {
                   <label className="form-label">Transaction Type</label>
                   <select className="form-select" value={selectedType} onChange={(e) => setSelectedType(e.target.value)}>
                     <option value="All">All</option>
-                    <option value="Transfer">Transfer</option>
-                    <option value="Payment">Payment</option>
-                    <option value="GGives">GGives</option>
-                    <option value="Refund">Refund</option>
-                    <option value="Other">Other</option>
+                    {types.map((t) => (
+                    <option key={t.id} value={t.name}>
+                      {t.name}
+                    </option>
+                  ))}
                   </select>
                 </div>
                 <div className="col-md-3">

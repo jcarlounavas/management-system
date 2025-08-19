@@ -107,12 +107,11 @@ app.post('/api/summary', async (req, res) => {
 
   try {
     let account_id = null;
-
     // Handle account_number
     if (account_number) {
       const [existingAccount] = await db.query(
         `SELECT id FROM user_account_numbers WHERE  user_id = ? AND account_number = ?`,
-        [account_number, user_id]
+        [user_id,account_number ]
       );
 
       if (existingAccount.length > 0) {
@@ -120,19 +119,29 @@ app.post('/api/summary', async (req, res) => {
       } else {
         // Insert if not exists
         const [inserted] = await db.query(
-          `INSERT INTO user_account_numbers (user_id, account_number) VALUES (?, ?)`,
+          `INSERT IGNORE INTO user_account_numbers (user_id, account_number) VALUES (?, ?)`,
           [user_id, account_number]
         );
+        if (inserted.insertId) {
+
         account_id = inserted.insertId;
+        } else {
+    // duplicate, fetch the existing one
+    const [existing] = await db.query(
+      `SELECT id FROM user_account_numbers WHERE user_id = ? AND account_number = ?`,
+      [user_id, account_number]
+    );
+    account_id = existing[0].id;
       }
     }
+  }
     // Insert into summary
     const [result] = await db.query(
     `INSERT INTO summary (file_name, total_transaction, user_id, account_id)
     VALUES (?, ?, ?, ?)`,
     [fileName, numberOfTransactions, user_id, account_id]
   );
-
+    
     const summaryId = result.insertId;
     // Extract reference numbers from uploaded transactions by user_id
     const referenceNos = transactions.map(tx => tx.reference_no).filter(Boolean);
@@ -151,13 +160,49 @@ app.post('/api/summary', async (req, res) => {
       existingReferences = existing.map(row => row.reference_no);
     }
     
-    const values = [];
-    const skippedDuplicates = [];
 
-    transactions.forEach(tx => {
+  
+     const uniqueTypes = [...new Set(transactions
+        .map(t => (t.type || '').trim())
+        .filter(Boolean)
+      )];
+
+      // 1) Fetch existing types
+      let typeMap = new Map(); // name -> id
+        if (uniqueTypes.length > 0) {
+        const [existingTypesRows] = await db.query(
+          `SELECT id, name FROM transaction_types WHERE name IN (?)`,
+          [uniqueTypes]
+        );
+        existingTypesRows.forEach(r => typeMap.set(r.name, r.id));
+
+        // 2) Insert missing types (ignore duplicates)
+        const missing = uniqueTypes.filter(n => !typeMap.has(n));
+        if (missing.length > 0) {
+          const bulk = missing.map(name => [name, 'Others']);
+          await db.query(
+            `INSERT IGNORE INTO transaction_types (name, category) VALUES ?`,
+            [bulk]
+          );
+          // 3) Re-fetch to complete the map (covers races)
+          const [refetched] = await db.query(
+            `SELECT id, name FROM transaction_types WHERE name IN (?)`,
+            [uniqueTypes]
+          );
+          refetched.forEach(r => typeMap.set(r.name, r.id));
+        }
+      }
+
+      // 4) Build VALUES for transactions insert
+      const values = [];
+      const skippedDuplicates = [];
+
+for (const tx of transactions) {
       if (tx.reference_no && existingReferences.includes(tx.reference_no)) {
         skippedDuplicates.push(tx.reference_no);
       } else {
+        const typeId = tx.type ? typeMap.get(tx.type.trim()) : null;
+
         values.push([
           tx.tx_date || null,
           tx.description || null,
@@ -165,19 +210,19 @@ app.post('/api/summary', async (req, res) => {
           tx.debit ?? 0,
           tx.credit ?? 0,
           tx.balance ?? 0,
-          tx.type || '',
+          typeId,
           tx.sender || '',
           tx.receiver || '',
           summaryId
         ]);
       }
-    });
-
+}
+  
     // Insert non-duplicate transactions
     if (values.length > 0) {
       await db.query(
         `INSERT INTO transactions
-         (tx_date, description, reference_no, debit, credit, balance, type, sender, receiver, summary_id)
+         (tx_date, description, reference_no, debit, credit, balance, type_id, sender, receiver, summary_id)
          VALUES ?`,
         [values]
       );
@@ -198,7 +243,6 @@ app.post('/api/summary', async (req, res) => {
     res.status(500).json({ error: "Failed to save data" });
   }
 });
-
 //User Profile
 app.get('/api/users/profile', async (req, res) => {
   const userId = req.query.user_id;
@@ -294,7 +338,7 @@ app.get('/api/transactions', async (req, res) => {
         t.reference_no,
         t.debit,
         t.credit,
-        t.type,
+        tt.name AS type,
         t.sender,
         COALESCE(sender_contact.name, t.sender) AS sender_name,
         t.receiver,
@@ -317,6 +361,8 @@ app.get('/api/transactions', async (req, res) => {
         ON t.sender = sender_contact.contact_number AND sender_contact.user_id = s.user_id
       LEFT JOIN contacts receiver_contact
         ON t.receiver = receiver_contact.contact_number AND receiver_contact.user_id = s.user_id
+      LEFT JOIN transaction_types tt
+        ON t.type_id = tt.id
       WHERE s.user_id = ?
     `;
     const params = [user_id];
@@ -692,6 +738,14 @@ app.post('/api/account-numbers', async (req, res) => {
     if (!user_id || !account_number) {
       return res.status(400).json({ error: 'Missing user_id or account_number' });
     }
+    const [existing] = await db.query(
+      'SELECT id FROM user_account_numbers WHERE user_id = ? AND account_number = ?',
+      [user_id, account_number]
+    );
+
+    if (existing.length > 0) {
+      return res.status(409).json({ error: 'Account number already exists' }); // 409 = conflict
+    }
 
     await db.query(
       'INSERT INTO user_account_numbers (user_id, account_number) VALUES (?, ?)',
@@ -733,7 +787,7 @@ app.put('/api/account-numbers/:id', async (req, res) => {
       return res.status(400).json({ error: 'Missing account number' });
     }
 
-    // Optional: Basic format check (adjust to your rules)
+    
     if (!/^\d{8,20}$/.test(account_number)) {
       return res.status(400).json({ error: 'Invalid account number format' });
     }
@@ -779,7 +833,17 @@ app.delete('/api/account-numbers/:id', async (req, res) => {
   }
 });
 
-
+app.get('/api/transaction-types', async (req, res) => {
+  try {
+    const [rows] = await db.query(
+      `SELECT id, name FROM transaction_types ORDER BY name ASC`
+    );
+    res.json(rows);
+  } catch (err) {
+    console.error("Error fetching transaction types:", err);
+    res.status(500).json({ error: "Failed to fetch transaction types" });
+  }
+});
 // Start Server
 app.listen(PORT, () => {
   console.log(` Server running on http://localhost:${PORT}`);
