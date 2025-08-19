@@ -97,7 +97,8 @@ app.post('/api/summary', async (req, res) => {
     fileName,
     numberOfTransactions,
     transactions = [],
-    user_id
+    user_id,
+    account_number
   } = req.body;
 
   if (!fileName || numberOfTransactions == null || !user_id) {
@@ -105,11 +106,31 @@ app.post('/api/summary', async (req, res) => {
   }
 
   try {
+    let account_id = null;
+
+    // Handle account_number
+    if (account_number) {
+      const [existingAccount] = await db.query(
+        `SELECT id FROM user_account_numbers WHERE  user_id = ? AND account_number = ?`,
+        [account_number, user_id]
+      );
+
+      if (existingAccount.length > 0) {
+        account_id = existingAccount[0].id;
+      } else {
+        // Insert if not exists
+        const [inserted] = await db.query(
+          `INSERT INTO user_account_numbers (user_id, account_number) VALUES (?, ?)`,
+          [user_id, account_number]
+        );
+        account_id = inserted.insertId;
+      }
+    }
     // Insert into summary
     const [result] = await db.query(
-    `INSERT INTO summary (file_name, total_transaction, user_id)
-    VALUES (?, ?, ?)`,
-    [fileName, numberOfTransactions, user_id]
+    `INSERT INTO summary (file_name, total_transaction, user_id, account_id)
+    VALUES (?, ?, ?, ?)`,
+    [fileName, numberOfTransactions, user_id, account_id]
   );
 
     const summaryId = result.insertId;
@@ -167,7 +188,9 @@ app.post('/api/summary', async (req, res) => {
       message: "Data saved with duplicate reference checking",
       inserted: values.length,
       skippedDuplicates: skippedDuplicates.length,
-      duplicateReferences: skippedDuplicates
+      duplicateReferences: skippedDuplicates,
+      account_id,
+      account_number: account_number || null
     });
 
   } catch (err) {
@@ -316,28 +339,40 @@ app.get('/api/transactions', async (req, res) => {
 
 //GET: Summary Transactions
 app.get('/api/summary/all', async (req, res) => {
-  const user_id = req.query.user_id;
+const {user_id, account_number} = req.query;
 
   if (!user_id) {
     return res.status(400).json({ error: 'Missing user_id' });
   }
 
   try {
-    const [rows] = await db.query(`
+    let query =`
+    
       SELECT
         s.created_at,
         s.id AS summary_id,
         s.file_name,
+        s.account_id,
+        a.account_number,
         COUNT(t.id) AS totalTransactions,
         COALESCE(SUM(t.debit), 0) AS totalDebit,
         COALESCE(SUM(t.credit), 0) AS totalCredit
       FROM summary s
       LEFT JOIN transactions t ON s.id = t.summary_id
+      LEFT JOIN user_account_numbers a ON s.account_id = a.id
       WHERE s.user_id = ?
-      GROUP BY s.id, s.file_name
-      ORDER BY s.id DESC
-    `, [user_id]);
+    `;
+    const params  = [user_id];
+    if (account_number) {
+      query += ' AND a.account_number = ?';
+      params.push(account_number);
+    }
 
+    query += `
+      GROUP BY s.id, s.file_name, s.account_id, a.account_number
+      ORDER BY s.id DESC
+    `;
+const [rows] = await db.query(query ,params);
     res.json(rows);
   } catch (error) {
     console.error(error);

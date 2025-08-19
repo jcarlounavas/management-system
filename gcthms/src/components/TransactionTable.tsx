@@ -275,7 +275,7 @@ const TransactionTable: React.FC = () => {
               ) : filteredTransactions.length === 0 ? (
                 <div className="alert alert-info text-center">No transactions found.</div>
               ) : (
-                <div className="table-responsive" style={{ maxHeight: '650px', overflowY: 'auto' }}>
+                <div className="table-responsive">
                   <table className="table table-bordered table-striped">
                     <thead className="table-primary">
                       <tr>

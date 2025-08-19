@@ -391,7 +391,10 @@ const FileReader = ({ file, accNum }: { file: File | null, accNum: string }) => 
     {summary && (
   <SaveButton
     summary={summary}
-    fileName={uploadedFile?.name || ''}
+    accountNumber={myAccount}
+    fileName={uploadedFile?.name || ''
+      
+    }
   />
 )}
 

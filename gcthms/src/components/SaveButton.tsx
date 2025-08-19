@@ -19,6 +19,7 @@ interface Summary {
 interface SaveButtonProps {
   fileName: string;
   summary: Summary;
+  accountNumber: string;
 }
 
 interface SummaryPayload {
@@ -26,9 +27,10 @@ interface SummaryPayload {
   fileName: string;
   numberOfTransactions: number;
   transactions: Transaction[];
+  account_number: string;
 }
 
-const SaveButton: React.FC<SaveButtonProps> = ({ fileName, summary }) => {
+const SaveButton: React.FC<SaveButtonProps> = ({ fileName, summary, accountNumber }) => {
   const [isSaving, setIsSaving] = useState(false);
 
   const handleSubmit = async (payload: SummaryPayload) => {
@@ -80,7 +82,8 @@ const SaveButton: React.FC<SaveButtonProps> = ({ fileName, summary }) => {
           user_id,
           fileName,
           numberOfTransactions: summary.transactions.length,
-          transactions: summary.transactions
+          transactions: summary.transactions,
+          account_number: accountNumber,
         });
       }}
       disabled={isSaving}
