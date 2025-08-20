@@ -177,7 +177,23 @@ app.post('/api/summary', async (req, res) => {
         skippedDuplicates++;
         continue;
       }
-      const type_id = tx.type ? (typeMap.get(String(tx.type).toLowerCase()) ?? null) : null;
+      let type_id = null;
+      if (tx.type) {
+        const typeKey = String(tx.type).toLowerCase();
+        type_id = typeMap.get(typeKey);
+
+        if (!type_id) {
+          // Insert new transaction type dynamically
+          const [insType] = await db.query(
+            "INSERT INTO transaction_types (name, category) VALUES (?, ?)",
+            [tx.type, "Others"]  // You can categorize later
+          );
+          type_id = insType.insertId;
+          typeMap.set(typeKey, type_id); // Update map for next tx
+        }
+      } else {
+        type_id = typeMap.get("unknown"); // fallback
+      }
       const safeDate = tx.tx_date && /^\d{4}-\d{2}-\d{2}/.test(tx.tx_date) ? tx.tx_date : null;
 
       values.push([
@@ -331,7 +347,7 @@ app.get('/api/transactions', async (req, res) => {
           WHEN t.receiver = receiver_contact.contact_number THEN 'Receiver'
         END AS role,
         CONCAT(
-          'Transfer from ',
+          tt.name, ' ',
           COALESCE(sender_contact.name, t.sender),
           ' to ',
           COALESCE(receiver_contact.name, t.receiver)

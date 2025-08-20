@@ -218,11 +218,12 @@ const FileReader = ({ file, accNum }: { file: File | null, accNum: string }) => 
             regex: /Buy Load.*?([\d,.]+(?:\.\d{2}))/i,
             type: "Buy Load",
             process: (m) => {
+              const receiver =m[1] ? m[1].trim() : "";
               const debit = parseFloat(m[1].replace(/,/g, ""));
               totalDebit += debit;
-              const description = "Buy Load";
+              const description = receiver ? `Buy Load For ${receiver}` : "Buy Load";
               buildPair(description, debit, 0);
-              pushTransaction({ tx_date, description, reference_no, type: "Buy Load", sender: myAccount, receiver: "", debit, credit: 0 }, debit, 0);
+              pushTransaction({ tx_date, description, reference_no, type: "Buy Load", sender: myAccount, receiver, debit, credit: 0 }, debit, 0);
             },
           },
           {
