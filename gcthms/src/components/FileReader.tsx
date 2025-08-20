@@ -489,6 +489,7 @@ const FileReader = ({ file, accNum }: { file: File | null, accNum: string }) => 
           summary={summary}
           accountNumber={myAccount}
           fileName={uploadedFile?.name || ''}
+          file={uploadedFile as File}
         />
       )}
     </div>

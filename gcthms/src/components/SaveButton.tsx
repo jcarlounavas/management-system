@@ -1,3 +1,4 @@
+// SaveButton
 import React, { useState } from 'react';
 
 interface Transaction {
@@ -18,6 +19,7 @@ interface Summary {
 
 interface SaveButtonProps {
   fileName: string;
+  file: File;
   summary: Summary;
   accountNumber: string;
 }
@@ -27,10 +29,18 @@ interface SummaryPayload {
   fileName: string;
   numberOfTransactions: number;
   transactions: Transaction[];
-  account_number: string;
+  fileHash: string;
+  account_number: string
 }
 
-const SaveButton: React.FC<SaveButtonProps> = ({ fileName, summary, accountNumber }) => {
+async function generateFileHash(file: File): Promise<string> {
+  const arrayBuffer = await file.arrayBuffer();
+  const hashBuffer = await crypto.subtle.digest("SHA-256", arrayBuffer);
+  const hashArray = Array.from(new Uint8Array(hashBuffer));
+  return hashArray.map(b => b.toString(16).padStart(2, "0")).join("");
+}
+
+const SaveButton: React.FC<SaveButtonProps> = ({ fileName, file, summary, accountNumber }) => {
   const [isSaving, setIsSaving] = useState(false);
 
   const handleSubmit = async (payload: SummaryPayload) => {
@@ -56,21 +66,26 @@ const SaveButton: React.FC<SaveButtonProps> = ({ fileName, summary, accountNumbe
 
       const responseData = await summaryResponse.json();
       console.log("Summary saved successfully:", responseData);
-      alert(`Summary and transactions saved successfully.
-      ${responseData.inserted} transactions inserted, ${responseData.skippedDuplicates} skipped due to duplication.`);
+      alert("Summary and transactions saved successfully.");
       window.location.reload();
-    } catch (error) {
+    } catch (error: any) {
       console.error("Save failed:", error);
+      if (error instanceof Error && error.message.includes("409")) {
+      alert("This file has already been uploaded.");
+      window.location.reload();
+    } else {
       alert("Failed to save summary and transactions.");
+    }
     } finally {
       setIsSaving(false);
     }
   };
 
+
   return (
     <button
       className="btn btn-success"
-      onClick={() => {
+      onClick={async () => {
         const rawUserId = localStorage.getItem("user_id");
         const user_id = rawUserId ? Number(rawUserId) : null;
 
@@ -79,11 +94,14 @@ const SaveButton: React.FC<SaveButtonProps> = ({ fileName, summary, accountNumbe
           return;
         }
 
+        const fileHash = await generateFileHash(file);
+
         handleSubmit({
           user_id,
           fileName,
           numberOfTransactions: summary.transactions.length,
           transactions: summary.transactions,
+          fileHash,
           account_number: accountNumber,
         });
       }}
@@ -93,5 +111,6 @@ const SaveButton: React.FC<SaveButtonProps> = ({ fileName, summary, accountNumbe
     </button>
   );
 };
+
 
 export default SaveButton;
