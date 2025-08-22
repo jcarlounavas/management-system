@@ -215,11 +215,12 @@ const FileReader = ({ file, accNum }: { file: File | null, accNum: string }) => 
             },
           },
           {
-            regex: /Buy Load.*?([\d,.]+(?:\.\d{2}))/i,
+            regex: /Buy Load.*?for\s+(\d+)\s+(\d+)\s+([\d,.]+(?:\.\d{2}))/i,
             type: "Buy Load",
-            process: (m) => {
-              const receiver =m[1] ? m[1].trim() : "";
-              const debit = parseFloat(m[1].replace(/,/g, ""));
+            process: (m: RegExpMatchArray) => {
+              const receiver = m[1] ? m[1].trim() : "";
+              const refNo = m[2] ? m[2].trim() : "";
+              const debit = m[3] ? parseFloat(m[3].replace(/,/g, "")) : 0;
               totalDebit += debit;
               const description = receiver ? `Buy Load For ${receiver}` : "Buy Load";
               buildPair(description, debit, 0);

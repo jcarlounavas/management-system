@@ -729,7 +729,7 @@ app.put('/api/update-password', async (req, res) => {
 // Inserting Account Numbers
 app.post('/api/account-numbers', async (req, res) => {
   try {
-    console.log('Received body:', req.body); // <-- log the body
+    
     const { user_id, account_number } = req.body;
 
     if (!user_id || !account_number) {
